@@ -31,10 +31,6 @@ end
 
 function _regular_sampling(model::PowerSpectralDensity, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tt<:Real,Ts<:Real,Tsh<:Real,Tsl<:Real}
     t = range(start=0, stop=T, step=Δt)
-    # Δf = 1 / s.T / s.S_low
-    # fₘ = 1 / s.Δt / 2 * s.S_high
-    # t = range(start=0, step=1 / (2fₘ), stop=1 / (2Δf))
-
     return Simulation(model, T, Δt, S_high, S_low, t)
 end
 
@@ -77,6 +73,18 @@ function timmer_koenig(psd, rng::Random.AbstractRNG)
     return x[1:N+1] * N * 2
 end
 
+function timmer_koenig_alt(psd, rng::Random.AbstractRNG)
+    N = length(psd)
+    Χ²₂ = rand(rng, Exponential(2), N - 1)
+    Χ²₁ = rand(rng, Chisq(1), 1)
+    θ = rand(rng, N)
+    θ[end] = 0.0
+    Rand_psd = sqrt.(psd / 2 .* vcat(Χ²₂, Χ²₁)) .* exp.(2π * im * θ)
+
+    insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
+    x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
+    return x[1:N+1] * N * 2
+end
 
 """
     sample(rng, sim, n)
@@ -89,15 +97,19 @@ Generate a time series with a given power spectral density (PSD) using the Timme
 - `n::Int`: Number of time series to generate.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG,sim::Simulation, n::Int=1)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1, alt::Bool=false)
     Δf = 1 / sim.T / sim.S_low
     fₘ = 1 / sim.Δt / 2 * sim.S_high
     f = range(start=Δf, step=Δf, stop=fₘ)
-    
-    psd = calculate.(f, Ref(sim.model))
-    
+
+    psd = sim.model(f)
+
     t = range(start=0, step=1 / (2fₘ), stop=1 / (2Δf))
-    x = [Tonari.timmer_koenig(psd, rng) * sqrt(Δf) for i in 1:n]
+    if alt
+        x = [timmer_koenig_alt(psd, rng) * sqrt(Δf) for i in 1:n]
+    else
+        x = [timmer_koenig(psd, rng) * sqrt(Δf) for i in 1:n]
+    end
     x = hcat(x...)
 
     # tₛ = range(start=0, step=sim.Δt, stop=sim.T)
@@ -107,4 +119,4 @@ function Distributions.sample(rng::Random.AbstractRNG,sim::Simulation, n::Int=1)
     # return sim.t, xₛ
 end
 
-Distributions.sample(sim::Simulation, n::Int=1) = Distributions.sample(Random.GLOBAL_RNG, sim, n)
+Distributions.sample(sim::Simulation, n::Int=1, alt::Bool=false) = Distributions.sample(Random.GLOBAL_RNG, sim, n, alt)
