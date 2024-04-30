@@ -5,6 +5,7 @@ using Distributions
 
 include("psd.jl")
 include("simulate.jl")
-export Simulation, PowerSpectralDensity, SimpleBendingPowerLaw, DoubleBendingPowerLaw, Lorentzian, timmer_koenig, calculate, sample
+
+export Simulation, PowerSpectralDensity, SingleBendingPowerLaw, DoubleBendingPowerLaw, Lorentzian, timmer_koenig, calculate, sample
 
 end

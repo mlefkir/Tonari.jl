@@ -37,6 +37,7 @@ end
 Simulation(model::Tp, T::Tt, Δt::Ts) where {Tp<:PowerSpectralDensity,Tt<:Real,Ts<:Real} = _regular_sampling(model, T, Δt, 10.0, 10.0)
 Simulation(model::Tp, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tp<:PowerSpectralDensity,Tt<:Real,Ts<:Real,Tsh<:Real,Tsl<:Real} = _regular_sampling(model, T, Δt, S_high, S_low)
 
+
 function _arbitrary_sampling(model::PowerSpectralDensity, t::AbstractVector{Tt}, S_high::Tsh, S_low::Tsl) where {Tt<:Real,Tsh<:Real,Tsl<:Real}
     if sort(t) != t
         error("The time vector must be sorted")
@@ -50,7 +51,7 @@ Simulation(model::Tp, t::AbstractVector{Tt}) where {Tp<:PowerSpectralDensity,Tt<
 Simulation(model::Tp, t::AbstractVector{Tt}, S_high::Tsh, S_low::Tsl) where {Tp<:PowerSpectralDensity,Tt<:Real,Tsh<:Real,Tsl<:Real} = _arbitrary_sampling(model, t, S_high, S_low)
 
 """
-timmer_koenig(psd, rng)
+    timmer_koenig(psd, rng)
 
 Generate a time series with a given power spectral density (PSD) using the Timmer & Koenig method.
 
@@ -70,9 +71,21 @@ function timmer_koenig(psd, rng::Random.AbstractRNG)
     Rand_psd = sqrt.(psd / 2) .* (Re + im * Im)
     insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
     x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-    return x[1:N+1] * N * 2
+    return x[1:N+1] * N 
 end
 
+"""
+    timmer_koenig_alt(psd, rng)
+
+Generate a time series with a given power spectral density (PSD) using the Timmer & Koenig method.
+
+# Arguments
+- `psd::Array{Float64, 1}`: PSD of the time series.
+- `rng::MersenneTwister`: Random number generator.
+
+# Returns
+- `x::Array{Float64, 1}`: Time series with the given PSD.
+"""
 function timmer_koenig_alt(psd, rng::Random.AbstractRNG)
     N = length(psd)
     Χ²₂ = rand(rng, Exponential(2), N - 1)
@@ -83,7 +96,7 @@ function timmer_koenig_alt(psd, rng::Random.AbstractRNG)
 
     insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
     x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-    return x[1:N+1] * N * 2
+    return x[1:N+1] * N 
 end
 
 """
