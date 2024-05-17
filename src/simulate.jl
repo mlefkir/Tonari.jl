@@ -71,7 +71,7 @@ function timmer_koenig(psd, rng::Random.AbstractRNG)
     Rand_psd = sqrt.(psd / 2) .* (Re + im * Im)
     insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
     x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-    return x[1:N+1] * N 
+    return x[1:N+1] * N
 end
 
 """
@@ -96,7 +96,7 @@ function timmer_koenig_alt(psd, rng::Random.AbstractRNG)
 
     insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
     x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-    return x[1:N+1] * N 
+    return x[1:N+1] * N
 end
 
 """
@@ -110,13 +110,13 @@ Generate a time series with a given power spectral density (PSD) using the Timme
 - `n::Int`: Number of time series to generate.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1, alt::Bool=false)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1, input_mean=0; Fvar=nothing, alt::Bool=false, poisson=false, exponentiate=false, error_size=0.02)
     Δf = 1 / sim.T / sim.S_low
     fₘ = 1 / sim.Δt / 2 * sim.S_high
     f = range(start=Δf, step=Δf, stop=fₘ)
 
     psd = sim.model(f)
-
+    # get the "true" time series
     t = range(start=0, step=1 / (2fₘ), stop=1 / (2Δf))
     if alt
         x = [timmer_koenig_alt(psd, rng) * sqrt(Δf) for i in 1:n]
@@ -125,11 +125,39 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1
     end
     x = hcat(x...)
 
-    # tₛ = range(start=0, step=sim.Δt, stop=sim.T)
+    # add the mean
+    xm = mean(x, dims=1)
+    xstd = std(x, dims=1)
+
+
+    # change the time series to the desired time vector
     indexes = searchsortedfirst.(Ref(t), sim.t)
     xₛ = x[indexes, :]
-    return t[indexes], xₛ
-    # return sim.t, xₛ
+
+
+    if !isnothing(Fvar)
+        xₛ = ((xₛ .- xm) ./ xstd * Fvar  .+ 1 ) .* input_mean
+    else
+        xₛ = (xₛ .- xm) .+ input_mean
+    end
+    # randomise the time series
+    if poisson
+        if any(xₛ .<= 0)
+            println("Warning: Poisson noise is only valid for positive values. Setting to 0.")
+            xₛ[xₛ.<=0] .= 0
+        end
+        x = rand.(rng, Poisson.(xₛ .* sim.Δt)) ./ sim.Δt
+        σₓ = sqrt.(x .* sim.Δt) ./ sim.Δt
+
+    else
+        if exponentiate
+            xₛ = exp.(xₛ)
+        end
+        σₓ = sqrt.(abs.(xₛ)) * error_size .* randn(rng, size(xₛ))
+        x = xₛ + σₓ .* randn(rng, size(xₛ))
+    end
+
+    return t[indexes], x, σₓ
 end
 
 Distributions.sample(sim::Simulation, n::Int=1, alt::Bool=false) = Distributions.sample(Random.GLOBAL_RNG, sim, n, alt)
