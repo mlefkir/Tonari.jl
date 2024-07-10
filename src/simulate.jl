@@ -153,7 +153,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1
         if exponentiate
             xₛ = exp.(xₛ)
         end
-        σₓ = sqrt.(abs.(xₛ)) * error_size .* randn(rng, size(xₛ))
+        σₓ = sqrt.(abs.(xₛ)) * error_size .* abs.(randn(rng, size(xₛ)))
         x = xₛ + σₓ .* randn(rng, size(xₛ))
     end
 

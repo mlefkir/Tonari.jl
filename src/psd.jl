@@ -79,7 +79,7 @@ function calculate(f, psd::Lorentzian)
 end
 
 function calculate(f, psd::DoubleBendingPowerLaw)
-    return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁)) / (1 + (f / (psd.f₁ * psd.Δf))^(psd.α₃ - psd.α₂))
+    return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁)) / (1 + (f / (psd.f₂))^(psd.α₃ - psd.α₂))
 end
 
 function calculate(f, psd::SingleBendingPowerLaw)
