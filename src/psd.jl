@@ -50,7 +50,7 @@ struct DoubleBendingPowerLaw{T<:Real} <: BendingPowerLaw
     α₃::T
 end
 
-SingleBendingPowerLaw(α₁::T, f₁::T, α₂::T, f₂::T, α₃::T) where {T<:Real} = SingleBendingPowerLaw{T}(1.0, α₁, f₁, α₂, f₂, α₃)
+DoubleBendingPowerLaw(α₁::T, f₁::T, α₂::T, f₂::T, α₃::T) where {T<:Real} = DoubleBendingPowerLaw{T}(1.0, α₁, f₁, α₂, f₂, α₃)
 
 @doc raw""" 
     Lorentzian(A, γ, f₀)
@@ -79,7 +79,7 @@ function calculate(f, psd::Lorentzian)
 end
 
 function calculate(f, psd::DoubleBendingPowerLaw)
-    return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁)) / (1 + (f / (psd.f₂))^(psd.α₃ - psd.α₂))
+    return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁)) / (1 + (f / psd.f₂)^(psd.α₃ - psd.α₂))
 end
 
 function calculate(f, psd::SingleBendingPowerLaw)
