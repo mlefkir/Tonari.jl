@@ -131,7 +131,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1
 
 
     # change the time series to the desired time vector
-    indexes = searchsortedfirst.(Ref(t), sim.t)
+    indexes = searchsortedlast.(Ref(t), sim.t)
     xₛ = x[indexes, :]
 
 
@@ -157,7 +157,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int=1
         x = xₛ + σₓ .* randn(rng, size(xₛ))
     end
 
-    return t[indexes], x, σₓ
+    return simu.t, x, σₓ
 end
 
 Distributions.sample(sim::Simulation, n::Int=1, alt::Bool=false) = Distributions.sample(Random.GLOBAL_RNG, sim, n, alt)
