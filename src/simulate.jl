@@ -70,8 +70,8 @@ function timmer_koenig(psd, rng::Random.AbstractRNG)
 	Im[end] = 0.0
 	Rand_psd = sqrt.(psd / 2) .* (Re + im * Im)
 	insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
-	x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-	return x[1:N+1]
+	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-2 is the length of the time series
+	return x
 end
 
 """
@@ -95,44 +95,117 @@ function timmer_koenig_alt(psd, rng::Random.AbstractRNG)
 	Rand_psd = sqrt.(psd / 2 .* vcat(Χ²₂, Χ²₁)) .* exp.(2π * im * θ)
 
 	insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
-	x = irfft(Rand_psd, 2 * (N + 1) - 2) # 2*(N+1)-2 is the length of the time series
-	return x[1:N+1]
+	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-2 is the length of the time series
+	return x
+end
+
+function split_longtimeseries(t, ts, n_slices::Int)
+	"""
+	Split a long time series into shorter time series.
+
+	Break the time series into `n_slices` shorter time series. The short time series are of equal length.
+
+	# Arguments
+	- `t`: The time indexes of the long time series.
+	- `ts`: The values of the long time series.
+	- `n_slices`: The number of slices to break the time series into.
+
+	# Returns
+	- A tuple of two lists: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
+	"""
+	t_slices = []
+	ts_slices = []
+	size_slice = div(length(t), n_slices)
+	for i in 1:n_slices
+		start_index = (i - 1) * size_slice + 1
+		end_index = i * size_slice
+		t_slice = collect(t[start_index:end_index])
+		ts_slice = ts[start_index:end_index]
+
+		push!(t_slices, t_slice)
+		push!(ts_slices, ts_slice)
+	end
+	return t_slices, ts_slices
 end
 
 """
-	sample(rng, sim, n)
+	sample(rng, sim, n=1, input_mean=0; split_long=false, Fvar=nothing, alt=false, poisson=false, exponentiate=false, error_size=0.02)
 
 Generate a time series with a given power spectral density (PSD) using the Timmer & Koenig method.
 
 # Arguments
 - `rng::MersenneTwister`: Random number generator.
 - `sim::Simulation`: The simulation 
-- `n::Int`: Number of time series to generate.
+- `n::Int`: Number of time series to generate. Default is 1.
+- `input_mean::Real`: The mean of the time series. Default is 0.
+- `split_long::Bool`: If true, the time series is split into shorter time series given by `sim.S_low`. Default is false.
+- `Fvar::Real`: The variance of the time series. Default is nothing.
+- `alt::Bool`: If true, uses the alternative Timmer & Koenig method. Default is false. 
+- `poisson::Bool`: If true, Poisson noise is added to the time series. Default is false.
+- `exponentiate::Bool`: If true, the time series is exponentiated. Default is false.
+- `error_size::Real`: The size of the error. Default is 0.02.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.02)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; split_long = false, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.02)
 	Δf = 1 / sim.T / sim.S_low
 	fₘ = 1 / sim.Δt / 2 * sim.S_high
+	Δτ = 1 / 2fₘ
 	f = range(start = Δf, step = Δf, stop = fₘ)
 
 	psd = sim.model(f)
 	# get the "true" time series
-	t = range(start = 0, step = 1 / (2fₘ), stop = 1 / (2Δf))
 	if alt
 		x = [timmer_koenig_alt(psd, rng) * sqrt(2Δf) * length(f) for i in 1:n]
 	else
 		x = [timmer_koenig(psd, rng) * sqrt(2Δf) * length(f) for i in 1:n]
 	end
 	x = hcat(x...)
+	t = range(0, step = Δτ, length = size(x, 1))
+
+	n_slices = round(Int,sim.S_low)
+
+    # split the long time series
+	if split_long
+		if n_slices < 5
+			println("Warning: The number of slices is less than 5. Setting S_low to a high value is required.")
+			println("Not splitting the time series.")
+			indexes = searchsortedlast.(Ref(t), sim.t)
+			xₛ = x[indexes, :]
+		else
+			xₛ = []
+			if n == 1 # for a single long time series
+				t_long, x_long = split_longtimeseries(t, x, n_slices)
+
+				for i in 1:n_slices
+					tcurr = collect(t_long[i]) .- t_long[i][1]
+					indexes = searchsortedlast.(Ref(tcurr), sim.t)
+					push!(xₛ, x_long[i][indexes])
+				end
+
+			else
+				for j in 1:n # for set of long time series
+					t_long, x_long = split_longtimeseries(t, reshape(x[:, j], (size(x, 1), 1)), n_slices)
+
+					for i in 1:n_slices
+						tcurr = collect(t_long[i]) .- t_long[i][1]
+						indexes = searchsortedlast.(Ref(tcurr), sim.t)
+						push!(xₛ, x_long[i][indexes])
+					end
+				end
+			end
+			xₛ = hcat(xₛ...)
+			t = t_long[1]
+		end
+	else
+        # change the time series to the desired time vector
+		indexes = searchsortedlast.(Ref(t), sim.t)
+		xₛ = x[indexes, :]
+	end
+    times = t[indexes]
 
 	# add the mean
-	xm = mean(x, dims = 1)
-	xstd = std(x, dims = 1)
-
-	# change the time series to the desired time vector
-	indexes = searchsortedlast.(Ref(t), sim.t)
-	xₛ = x[indexes, :]
-
+	xm = mean(xₛ, dims = 1)
+	xstd = std(xₛ, dims = 1)
 
 	if !isnothing(Fvar)
 		xₛ = ((xₛ .- xm) ./ xstd * Fvar .+ 1) .* input_mean
@@ -156,7 +229,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 		x = xₛ + σₓ .* randn(rng, size(xₛ))
 	end
 
-	return sim.t, x, σₓ
+	return times, x, σₓ
 end
 
 Distributions.sample(sim::Simulation, n::Int = 1, alt::Bool = false) = Distributions.sample(Random.GLOBAL_RNG, sim, n, alt)
