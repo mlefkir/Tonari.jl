@@ -17,5 +17,14 @@ Order   = [:type, :function]
 ```@autodocs
 Modules = [Tonari]
 Pages = ["simulate.jl"]
-Order   = [:function]
+Order = [:type, :function]
+```
+
+
+## Periodogram
+
+```@autodocs
+Modules = [Tonari]
+Pages = ["periodogram.jl"]
+Order = [:function]
 ```
