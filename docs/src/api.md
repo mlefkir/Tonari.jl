@@ -1,9 +1,9 @@
 # API Reference
 
 
-## Power spectral densities
+## Models
 
-### Models and functions
+### Power spectral densities
 
 ```@autodocs
 Modules = [Tonari]

@@ -86,7 +86,6 @@ function calculate(f, psd::SingleBendingPowerLaw)
     return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁))
 end
 
-
 struct SumOfPowerSpectralDensity{Tp<:Vector{<:PowerSpectralDensity}} <: PowerSpectralDensity
     psd::Tp
 end
