@@ -38,7 +38,7 @@ Simulation(model::Tp, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tp <: Mode
 
 
 function _arbitrary_sampling(model::Model, t::AbstractVector{Tt}, S_high::Tsh, S_low::Tsl) where {Tt <: Real, Tsh <: Real, Tsl <: Real}
-	if sort(t) != t
+	if !issorted(t)
 		error("The time vector must be sorted")
 	end
 	T = t[end] - t[1]
@@ -84,14 +84,14 @@ function timmer_koenig(𝓟, rng::Random.AbstractRNG; alternative = false)
 	Rand_psd = get_randomised_psd(𝓟, rng, alternative)
 
 	insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
-	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-2 is the length of the time series
+	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-1 is the length of the time series
 	return x
 end
 
 function timmer_koenig_manual(Rand_psd)
 	N = length(Rand_psd)
 	insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
-	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-2 is the length of the time series
+	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-1 is the length of the time series
 	return x
 end
 
@@ -187,8 +187,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	end
 	if split_long
 		if n_slices < 5
-			println("Warning: The number of slices is less than 5. Setting S_low to a high value is required.")
-			println("Not splitting the time series.")
+			@warn "The number of slices is less than 5. Setting S_low to a high value is required.\nNot splitting the time series."
 			indexes = sample_timeseries(t, t_desired)
 			for j in 1:n_bands
 				if n_bands == 1
@@ -263,7 +262,7 @@ function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; Fvar = nothing, pois
 	# randomise the time series
 	if poisson
 		if any(xₛ .<= 0)
-			println("Warning: Poisson noise is only valid for positive values. Setting to 0.")
+			@warn "Poisson noise is only valid for positive values. Setting to 0."
 			xₛ[xₛ.<=0] .= 0
 		end
 		x = rand.(rng, Poisson.(xₛ .* Δt)) ./ Δt
