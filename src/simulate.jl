@@ -5,7 +5,7 @@ A struct that contains the information of a simulation of a stochastic process.
 
 # Fields
 - `model::Model`: The power spectral density of the process.
-- `T::Real`: The duration of the simulated time series.
+- `T::Real`: The duration of the simulated time series. Note that the time stamps are from 0 to `T - Δt`, so the duration is `T - Δt`.
 - `Δt::Real`: The sampling period, or minimum time difference between samples.
 - `S_high::Real`: The factor by which the maximum frequency is multiplied for the simulation.
 - `S_low::Real`: The factor by which the minimum frequency is divided for the simulation.
@@ -29,8 +29,8 @@ struct Simulation{Tp <: Model, Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
 end
 
 function _regular_sampling(model::Model, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
-	t = range(start = 0, stop = T-Δt, step = Δt)
-	return Simulation(model, T, Δt, S_high, S_low, t)
+	t = range(start = 0, stop = T - Δt, step = Δt)
+	return Simulation(model, T - Δt, Δt, S_high, S_low, t)
 end
 
 Simulation(model::Tp, T::Tt, Δt::Ts) where {Tp <: Model, Tt <: Real, Ts <: Real} = _regular_sampling(model, T, Δt, 10.0, 10.0)
@@ -43,7 +43,7 @@ function _arbitrary_sampling(model::Model, t::AbstractVector{Tt}, S_high::Tsh, S
 	end
 	T = t[end] - t[1]
 	Δt = minimum(diff(t))
-	return Simulation(model, T, Δt, S_high, S_low, t)
+	return Simulation(model, T, Δt, S_high, S_low, t .- t[1])
 end
 
 Simulation(model::Tp, t::AbstractVector{Tt}) where {Tp <: Model, Tt <: Real} = _arbitrary_sampling(model, t, 10.0, 10.0)
@@ -90,10 +90,8 @@ end
 
 function timmer_koenig_manual(Rand_psd)
 	N = length(Rand_psd)
-
 	insert!(Rand_psd, 1, 0.0)# N+1 frequencies including 0 and Nyquist
 	x = irfft(Rand_psd, 2 * (N + 1) - 1) # 2*(N+1)-2 is the length of the time series
-
 	return x
 end
 
@@ -127,15 +125,15 @@ Break the time series into `n_slices` shorter time series. The short time series
 # Returns
 - A tuple of two lists: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
 """
-function split_longtimeseries(t, ts, n_slices::Int)
+function split_longtimeseries(t, ts, n_slices::Int, t_end)
 	t_slices = []
 	ts_slices = []
-	size_slice = div(length(t), n_slices)
+	end_long = sum(t .<= t_end)
+
+	indexes = [i*end_long+1:(end_long)*(i+1) for i in 0:n_slices-1]
 	for i in 1:n_slices
-		start_index = (i - 1) * size_slice + 1
-		end_index = i * size_slice
-		t_slice = collect(t[start_index:end_index])
-		ts_slice = ts[start_index:end_index]
+		t_slice = t[indexes[i]] .- t[indexes[i]][1]
+		ts_slice = ts[indexes[i]]
 
 		push!(t_slices, t_slice)
 		push!(ts_slices, ts_slice)
@@ -143,27 +141,33 @@ function split_longtimeseries(t, ts, n_slices::Int)
 	return t_slices, ts_slices
 end
 
-findnearest(a, b) = argmin(abs.(a .- b))
+
+@doc raw"""
+	findnearest(a, b)
+
+Find the nearest value in `b` to each value in `a`.
+This assumes that a and b are sorted.
+"""
+function findnearest(a, b)
+	@assert issorted(a) && issorted(b)
+	indexes = []
+	j = 1
+	for i in eachindex(a)
+		while !(b[j] ≈ a[i]) && j < length(b)
+			j += 1
+		end
+		push!(indexes, j)
+	end
+	return indexes
+end
+
 @doc raw"""
 	sample_timeseries(t, y, M)
 
 Extract a random subset of points from the time series.
 """
-function sample_timeseries(t, M, t_desired)
-	input_sampling_period = t[2] - t[1]
-	output_sampling_period = (t[end] - t[1]) / (M-1)
-	println("t ", t)
-	println("t[end] ", t[end], " t[1] ", t[1])
-	
-	println("out ",output_sampling_period," input ", input_sampling_period," diff ", diff(t_desired))
-	if !all(isapprox.(diff(t_desired),output_sampling_period))
-		println("Warning: The time vector is not evenly spaced. Using the desired time stamps.")
-		return findnearest.(Ref(t), t_desired)
-	else
-		index_step_size = round(Int, output_sampling_period / input_sampling_period)
-		indexes = range(start = 1, step = index_step_size, length = M)
-		return indexes
-	end
+function sample_timeseries(t, t_desired)
+	findnearest(t_desired, t)
 end
 
 @doc raw"""
@@ -171,10 +175,9 @@ end
 
 Split the time series into shorter time series given by `sim.S_low`.
 """
-function sample_split_timeseries(x, t, t_desired, n, n_slices, split_long)
+function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
 
-	# should be better than sample_timeseries
-
+	t_end = t_desired[end]
 	n_bands = 1
 	xₛ = []
 	if x isa Vector{Matrix{Float64}}
@@ -186,7 +189,7 @@ function sample_split_timeseries(x, t, t_desired, n, n_slices, split_long)
 		if n_slices < 5
 			println("Warning: The number of slices is less than 5. Setting S_low to a high value is required.")
 			println("Not splitting the time series.")
-			indexes = sample_timeseries(t, length(t_desired), t_desired)#searchsortedlast.(Ref(t), t_desired)
+			indexes = sample_timeseries(t, t_desired)
 			for j in 1:n_bands
 				if n_bands == 1
 					push!(xₛ, x[indexes, :])
@@ -196,67 +199,43 @@ function sample_split_timeseries(x, t, t_desired, n, n_slices, split_long)
 			end
 
 		else
-			if n == 1 # for a single long time series
-				for j in 1:n_bands
-					push!(xₛ, [])
+			for k in 1:n_bands
+				push!(xₛ, [])
+				l = 0
 
+				for j in 1:n_sim # for set of long time series
 					if n_bands == 1
-						t_long, x_long = split_longtimeseries(t, x, n_slices)
+						t_long, x_long = split_longtimeseries(t, x, n_slices, t_end)
 					else
-						t_long, x_long = split_longtimeseries(t, x[j], n_slices)
+						t_long, x_long = split_longtimeseries(t, reshape(x[k][:, j], (size(x[k], 1), 1)), n_slices, t_end)
 					end
 					for i in 1:n_slices
 						tcurr = collect(t_long[i]) .- t_long[i][1]
-						indexes = sample_timeseries(tcurr, length(t_desired), t_desired)
-						push!(xₛ[j], x_long[i][indexes])
+						indexes = sample_timeseries(tcurr, t_desired)
+						push!(xₛ[k], x_long[i][indexes])
+						l += 1
+						if l == n # if we have the desired number of time series
+							break
+						end
 					end
 					times = t_long[1][indexes]
 				end
-
-			else
-				for k in 1:n_bands
-					push!(xₛ, [])
-
-					for j in 1:n # for set of long time series
-						if n_bands == 1
-							t_long, x_long = split_longtimeseries(t, reshape(x[:, j], (size(x, 1), 1)), n_slices)
-						else
-							t_long, x_long = split_longtimeseries(t, reshape(x[k][:, j], (size(x[k], 1), 1)), n_slices)
-						end
-						for i in 1:n_slices
-							tcurr = collect(t_long[i]) .- t_long[i][1]
-							indexes = sample_timeseries(tcurr, length(t_desired), t_desired)
-							push!(xₛ[k], x_long[i][indexes])
-						end
-						times = t_long[1][indexes]
-
-					end
-
-				end
-
 			end
+
 			xₛ_full = [hcat(xₛ[j]...) for j in 1:n_bands]
 		end
 	else
 		# get a subset of the time series
-		# t_long, x_long = split_longtimeseries(t, x, n_slices)
-
-		println("lent", size(x), " ", size(t_desired))
-
-		println("lent", length(t), " ", length(t_desired))
-
-		indexes_t = t .<=(t_desired[end]+√eps(Float64)) # just in case the last value is not included due to floating point errors
+		indexes_t = t .<= (t_desired[end] + √eps(Float64)) # just in case the last value is not included due to floating point errors
 		t = t[indexes_t]
-		x = x[indexes_t,:]
-		println(length(t), " ", length(t_desired))
-
+		# x = x[:][indexes_t, :]
 		# change the time series to the desired time vector
-		indexes = sample_timeseries(t, length(t_desired), t_desired)
+		indexes = sample_timeseries(t, t_desired)
 		for j in 1:n_bands
 			if n_bands == 1
-				push!(xₛ, x[indexes, :])
+				push!(xₛ, x[indexes_t, :][indexes, :])
 			else
-				push!(xₛ, x[j][indexes, :])
+				push!(xₛ, x[j][indexes_t, :][indexes, :])
 			end
 		end
 		xₛ_full = xₛ
@@ -310,7 +289,7 @@ Generate a time series with a given power spectral density (PSD) using the [1995
 - `sim::Simulation`: The simulation 
 - `n::Int`: Number of time series to generate. Default is 1.
 - `input_mean::Real`: The mean of the time series. Default is 0.
-- `split_long::Bool`: If true, the time series is split into shorter time series given by `sim.S_low`. Default is false.
+- `split_long::Bool`: If true, the time series is split into shorter time series given by `sim.S_low`-1. Default is true.
 - `randomise_values::Bool`: If true, the values of the time series are randomised. Default is true.
 - `Fvar::Real`: The variance of the time series. Default is nothing.
 - `alt::Bool`: If true, uses the alternative Timmer & Koenig method. Default is false. 
@@ -319,20 +298,28 @@ Generate a time series with a given power spectral density (PSD) using the [1995
 - `error_size::Real`: The size of the error. Default is 0.05.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; randomise_values = true, split_long = false, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05)
 	Δf = 1 / sim.T / sim.S_low
 	fₘ = 1 / sim.Δt / 2 * sim.S_high
 	Δτ = 1 / 2fₘ
-	f = range(start = Δf, step = Δf, stop = fₘ)
+	f = range(start = Δf, step = Δf, stop = fₘ + Δf)
+
+	n_slices = round(Int, sim.S_low) - 1 # sometimes the long time series cannot be split into S_low slices so we need to adjust this value
+	# adjust n if the time series is split
+	if split_long
+		n_sim = ceil(Int, n / n_slices)
+	else
+		n_sim = n
+	end
 
 
 	if sim.model isa PowerSpectralDensity
 		psd = sim.model(f)
 		# get the "true" time series
-		x = [timmer_koenig(psd, rng, alternative = alt) * sqrt(2Δf) * length(f) for i in 1:n]
+		x = [timmer_koenig(psd, rng, alternative = alt) * sqrt(2Δf) * length(f) for i in 1:n_sim]
 		x = hcat(x...)
 
-		t = range(0, step = Δτ, length = size(x, 1))
+		t = 0:Δτ:(size(x, 1)-1)*Δτ
 
 	elseif sim.model isa CrossSpectralDensity
 
@@ -340,18 +327,18 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 
 		psd = sim.model.𝓟₁(f)
 		# get the randomised periodogram
-		X = [get_randomised_psd(psd, rng, alt) * sqrt(2Δf) * length(f) for i in 1:n]
+		X = [get_randomised_psd(psd, rng, alt) * sqrt(2Δf) * length(f) for i in 1:n_sim]
 		X = hcat(X...)
-		println(size(X))
+
 		if sim.model.𝓟₁ == sim.model.𝓟₂
-			x₁ = [timmer_koenig_manual(X[:, i]) for i in 1:n]
-			x₂ = [timmer_koenig_manual(X[:, i] .* Δφ) for i in 1:n]
+			x₁ = [timmer_koenig_manual(X[:, i]) for i in 1:n_sim]
+			x₂ = [timmer_koenig_manual(X[:, i] .* Δφ) for i in 1:n_sim]
 		else
 			psd₁ = sim.model.𝓟₁(f)
 			psd₂ = sim.model.𝓟₂(f)
 			ratio = sqrt.(psd₂ ./ psd₁)
-			x₁ = [timmer_koenig_manual(X[:, i]) for i in 1:n]
-			x₂ = [timmer_koenig_manual(X[:, i] .* ratio .* Δφ) for i in 1:n]
+			x₁ = [timmer_koenig_manual(X[:, i]) for i in 1:n_sim]
+			x₂ = [timmer_koenig_manual(X[:, i] .* ratio .* Δφ) for i in 1:n_sim]
 		end
 
 		x₁ = hcat(x₁...)
@@ -362,10 +349,9 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 		error("The model must be a PowerSpectralDensity or CrossSpectralDensity")
 	end
 
-	n_slices = round(Int, sim.S_low)
 
 	# split the long time series and resample at the desired time stamps
-	times, xₛ = sample_split_timeseries(x, t, sim.t, n, n_slices, split_long)
+	times, xₛ = sample_split_timeseries(x, t, sim.t, n_sim, n, n_slices, split_long)
 
 	# return the time series without randomising the values
 	if !randomise_values
