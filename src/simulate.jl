@@ -113,14 +113,16 @@ function get_randomised_psd(𝓟, rng::Random.AbstractRNG, alternative = false)
 end
 
 @doc raw"""
-Split a long time series into shorter time series.
+	split_longtimeseries(t, ts, n_slices, t_end)
 
+Split a long time series into shorter time series.
 Break the time series into `n_slices` shorter time series. The short time series are of equal length.
 
 # Arguments
 - `t`: The time indexes of the long time series.
 - `ts`: The values of the long time series.
 - `n_slices`: The number of slices to break the time series into.
+- `t_end`
 
 # Returns
 - A tuple of two lists: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
@@ -171,9 +173,9 @@ function sample_timeseries(t, t_desired)
 end
 
 @doc raw"""
-	sample_split_timeseries(
+	sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
 
-Split the time series into shorter time series given by `sim.S_low`.
+Split the time series into shorter `.
 """
 function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
 
@@ -247,10 +249,48 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 end
 
 @doc raw"""
-	randomise_fluxes(rng::Random.AbstractRNG, xₛ, Δt::Real)
+	draw_errorbars(rng, x, Δt, poisson=false, Fvar=nothing, error_size=0.05)
+
+Draw errorbars for the time series.
+
+# Arguments
+- `rng::MersenneTwister`: Random number generator.
+- `x::Array{Float64, 1}`: The values of the time series.
+- `Δt::Real`: The sampling period.
+- `poisson::Bool`: If true, Poisson noise is added to the time series. Default is false.
+- `Fvar::Real`: The variance of the time series. Default is nothing.
+- `error_size::Real`: The size of the error. Default is 0.05.
 """
-function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; Fvar = nothing, poisson = false, exponentiate = false, error_size = 0.05)
+function draw_errorbars(rng, x, Δt, poisson = false, Fvar = nothing, error_size = 0.05)
+
+	if poisson
+		σₓ = sqrt.(x .* Δt) ./ Δt
+	else
+		σₓ = sqrt.(abs.(x)) * error_size .* abs.(randn(rng, size(x)))
+	end
+	return σₓ
+end
+
+@doc raw"""
+	randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; σ = nothing, Fvar = nothing, poisson = false, exponentiate = false, error_size = 0.05)
+
+Randomise the fluxes of the time series.
+
+# Arguments
+- `rng::MersenneTwister`: Random number generator.
+- `xₛ::Array{Float64, 1}`: The values of the time series.
+- `Δt::Real`: The sampling period.
+- `input_mean::Real`: The mean of the time series. Default is 0.
+- `σ::Array{Float64, 1}`: The errorbars of the time series. Default is nothing.
+- `Fvar::Real`: The variance of the time series. Default is nothing.
+- `poisson::Bool`: If true, Poisson noise is added to the time series. Default is false.
+- `exponentiate::Bool`: If true, the time series is exponentiated. Default is false.
+"""
+function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; σ = nothing, Fvar = nothing, poisson = false, exponentiate = false, error_size = 0.05)
 	# add the mean
+	if !isnothing(σ) && poisson
+		@warn "Errorbars given but Poisson distribution chosen, discarding the errorbars"
+	end
 	xm = mean(xₛ, dims = 1)
 	xstd = std(xₛ, dims = 1)
 
@@ -266,14 +306,23 @@ function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; Fvar = nothing, pois
 			xₛ[xₛ.<=0] .= 0
 		end
 		x = rand.(rng, Poisson.(xₛ .* Δt)) ./ Δt
-		σₓ = sqrt.(x .* Δt) ./ Δt
+		σₓ = draw_errorbars(rng, x, Δt, true, Fvar, error_size)
 
 	else
 		if exponentiate
 			xₛ = exp.(xₛ)
 		end
-		σₓ = sqrt.(abs.(xₛ)) * error_size .* abs.(randn(rng, size(xₛ)))
+		if isnothing(σ)
+			σₓ = draw_errorbars(rng, xₛ, Δt, false, Fvar, error_size)
+		else
+			@assert all(σ .>= 0.0) "The errorbars are not positive"
+			σₓ = σ
+		end
 		x = xₛ + σₓ .* randn(rng, size(xₛ))
+		if exponentiate && any(x .<= 0)
+			@warn "Exponentiated time series has negative values. Setting to 0."
+			x[x.<=0] .= 0
+		end
 	end
 	return x, σₓ
 end
@@ -297,7 +346,19 @@ Generate a time series with a given power spectral density (PSD) using the [1995
 - `error_size::Real`: The size of the error. Default is 0.05.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; σₓ = nothing, randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05)
+	@assert n > 0 "The number of simulations n must be a postive integer!, n=$n is not accepted"
+	if !isnothing(Fvar)
+		@assert Fvar > 0 "The variance Fvar must be a positive number!"
+	end
+	if !isnothing(σₓ)
+		@assert all(σₓ .> 0) "The errorbars given must be positve!"
+	end
+	if poisson && exponentiate
+		@warn "Poisson noise is not valid for exponentiated time series. Setting poisson to false."
+		poisson = false
+	end
+
 	Δf = 1 / sim.T / sim.S_low
 	fₘ = 1 / sim.Δt / 2 * sim.S_high
 	Δτ = 1 / 2fₘ
@@ -348,7 +409,6 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 		error("The model must be a PowerSpectralDensity or CrossSpectralDensity")
 	end
 
-
 	# split the long time series and resample at the desired time stamps
 	times, xₛ = sample_split_timeseries(x, t, sim.t, n_sim, n, n_slices, split_long)
 
@@ -359,7 +419,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 
 	# randomise the fluxes
 	if sim.model isa PowerSpectralDensity
-		x, σₓ = randomise_fluxes(rng, xₛ, sim.Δt, input_mean, Fvar = Fvar, poisson = poisson, exponentiate = exponentiate, error_size = error_size)
+		x, σₓ = randomise_fluxes(rng, xₛ, sim.Δt, input_mean, σ = σₓ, Fvar = Fvar, poisson = poisson, exponentiate = exponentiate, error_size = error_size)
 	elseif sim.model isa CrossSpectralDensity
 		x, σₓ = [], []
 		for i in 1:2
