@@ -12,9 +12,9 @@ function init_simu_regular()
 	Δt = 0.1
 	sim = Simulation(model, T, Δt)
 	@test sim.model == model
-	@test sim.T == T - Δt
+	@test sim.T == T
 	@test sim.Δt == Δt
-	@test sim.t == 0:Δt:T-Δt
+	@test sim.t == 0:Δt:T
 end
 
 function init_simu_regular_bis()
@@ -22,9 +22,9 @@ function init_simu_regular_bis()
 	T, Δt = 302.13, 0.0321
 	sim = Simulation(model, T, Δt)
 	@test sim.model == model
-	@test sim.T == T - Δt
+	@test sim.T == T 
 	@test sim.Δt == Δt
-	@test sim.t == 0:Δt:T-Δt
+	@test sim.t == 0:Δt:T
 end
 
 function init_simu_irregular()
@@ -53,9 +53,9 @@ function init_simu_regular_extend()
 	T, Δt = 302.13, 0.0321
 	sim = Simulation(model, T, Δt, 15.5, 14.4)
 	@test sim.model == model
-	@test sim.T == T - Δt
+	@test sim.T == T 
 	@test sim.Δt == Δt
-	@test sim.t == 0:Δt:T-Δt
+	@test sim.t == 0:Δt:T
 	@test sim.S_high == 15.5
 	@test sim.S_low == 14.4
 end
@@ -101,10 +101,10 @@ end
 function sample_simu_regular()
 
 	sim, T, Δt = setUp_simu_regular()
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(306)
 	tx, x, σ = sample(rng, sim)
 	N = convert(Int, T / Δt)
-	@test tx ≈ sim.t
+	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, 1)
 end
@@ -112,10 +112,10 @@ end
 function sample_simu_regular_n()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(124)
 	tx, x, σ = sample(rng, sim, n)
-	N = convert(Int, T / Δt)
-	@test tx ≈ sim.t
+	N = convert(Int, T/ Δt)
+	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, n)
 end
@@ -123,10 +123,10 @@ end
 function sample_simu_regular_n_nosplit()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(216)
 	tx, x, σ = sample(rng, sim, n, split_long = false)
 	N = convert(Int, T / Δt)
-	@test tx ≈ sim.t
+	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, n)
 end
@@ -134,10 +134,10 @@ end
 function sample_simu_regular_poisson()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(816)
 	tx, x, σ = sample(rng, sim, n, poisson = true)
 	N = convert(Int, T / Δt)
-	@test tx ≈ sim.t
+	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, n)
 	@test all(x .>= 0)
@@ -146,10 +146,10 @@ end
 function sample_simu_regular_expo()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(936)
 	tx, x, σ = sample(rng, sim, n, exponentiate = true)
 	N = convert(Int, T / Δt)
-	@test tx ≈ sim.t
+	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, n)
 	@test all(x .>= 0)
@@ -158,7 +158,7 @@ end
 function sample_simu_regular_error()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
-	rng = MersenneTwister(16)
+	rng = MersenneTwister(2346)
     N = convert(Int, T / Δt)
 	σ = rand(rng, N)
     tx, x, σs = sample(rng, sim, n, σₓ = σ)
