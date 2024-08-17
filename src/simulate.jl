@@ -5,7 +5,7 @@ A struct that contains the information of a simulation of a stochastic process.
 
 # Fields
 - `model::Model`: The power spectral density of the process.
-- `T::Real`: The duration of the simulated time series. Note that the time stamps are from 0 to `T - Δt`, so the duration is `T - Δt`.
+- `T::Real`: The duration of the simulated time series. Note that the time stamps are from 0 to `T`, so the duration is `T`.
 - `Δt::Real`: The sampling period, or minimum time difference between samples.
 - `S_high::Real`: The factor by which the maximum frequency is multiplied for the simulation.
 - `S_low::Real`: The factor by which the minimum frequency is divided for the simulation.

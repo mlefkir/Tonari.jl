@@ -7,7 +7,7 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"), style = :autho
 
 makedocs(sitename = "Tonari.jl",
 	pages = ["Home" => "index.md",
-		"Simulations" => ["simulations.md"],
+		"Simulations" => ["simulations.md","simulations_delays.md"],
         "Spectral analysis" => ["periodogram.md"],
 		"References" => "references.md", 
         "API Reference" => "api.md",

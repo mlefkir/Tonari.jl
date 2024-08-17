@@ -4,6 +4,6 @@
 astronomical applications.
 
 ```@contents
-Pages = vcat(["getting_started.md"],["api.md","references.md"])
+Pages = ["index.md","simulations.md","simulations_delays.md","periodogram.md", "references.md", "api.md"]
 Depth = 2
 ```

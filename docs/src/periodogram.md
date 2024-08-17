@@ -12,7 +12,7 @@ where $x_n$ is the time series , $f$ is the frequency, and $\Delta t$ is the tim
 I(f) = \frac{2}{T} |X(f)|^2
 ```
 
-where $T=N$ is the total duration of the time series. The periodogram is an unbiased estimator of the power spectral density.
+where $T=N\Delta t$ is the total duration of the time series. The periodogram is an unbiased estimator of the power spectral density.
 
 ```@example periodogram
 using Tonari
@@ -27,9 +27,9 @@ Let's start by simulating time series data with a single bending power law power
 psd_model = SingleBendingPowerLaw(1.0, 1.13, 1.2e-1, 4.22)
 f = 10.0 .^ range(-3, stop=2, length=1000)
 psd = psd_model(f)
-T, Δt = 504.2, 0.132
-simu = Simulation(psd_model, T, Δt, 10, 10)
-t, x, σ = sample(rng, simu, 10, split_long = true, error_size = 0.25)
+T, Δt = 504.2, 0.12
+simu = Simulation(psd_model, T, Δt)
+t, x, σ = sample(rng, simu, 10, error_size = 0.25)
 ```
 
 We compute the average periodogram of the time series data using the function [`periodogram`](@ref). It is common to subtract the mean of the time series before computing the periodogram. The function also allows for applying end-matching, which is useful for reducing spectral leakage when the first and last points of the time series are not close to each other in value. 

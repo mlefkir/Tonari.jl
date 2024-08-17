@@ -10,8 +10,7 @@ using Plots
 using StatsBase
 ```
 
-
-Let's define the power spectrum model, for instance we will use [`DoubleBendingPowerLaw`](@ref). 
+Let's define the power spectrum model, for instance we will use [`SingleBendingPowerLaw`](@ref). 
 
 ```@example simulation_univariate
 psd_model = SingleBendingPowerLaw(1.0, 1.13, 1.2e-1, 4.22)
@@ -21,7 +20,7 @@ plot(f, psd, xscale=:log10, yscale=:log10, xlabel="Frequency", ylabel="Power Spe
 ```
 ## Regularly sampled data
 
-Now we can simulate the time series data. We first define a [`Simulation`](@ref) object with the power spectrum model,the total time `T`, the time step `Δt`, the mean count rate `μ`, and the variance `σ²`. We can also add the `S_low` and `S_high` parameters to the simulation object. The `S_low` and `S_high` parameters are factors that extend the grid of frequencies. This is useful to avoid the cyclic effect of the discrete Fourier transform, the resulting time series is extracted from a longer time interval.
+Now we can simulate the time series data. We first define a [`Simulation`](@ref) struct with the power spectrum model,the total time `T`, the time step `Δt`, the mean count rate `μ`, and the variance `σ²`. We can also add the `S_low` and `S_high` parameters to the simulation object. The `S_low` and `S_high` parameters are factors that extend the grid of frequencies. This is useful to avoid the cyclic effect of the discrete Fourier transform, the resulting time series is extracted from a longer time interval.
 
 
 ```@example simulation_univariate
@@ -35,11 +34,11 @@ Now we can simulate the time series data by sampling the generative model.
 ```@example simulation_univariate
 rng = MersenneTwister(42)
 N = 10
-t, x, σ = sample(rng, simu, N, split_long = true, error_size = 0.25)
+t, x, σ = sample(rng, simu, N, error_size = 0.25)
 ```
 
 !!! note
-    The `split_long` parameter is used to split the long time series into smaller segments to speed up the computation. This is useful when we want to simulate a large number of time series.
+    The `split_long` parameter is used to split the long time series into smaller segments to speed up the computation, by default this is enabled. This is useful when we want to simulate a large number of time series.
     
 Finally, we can plot the simulated time series data.
     
@@ -74,6 +73,20 @@ simu = Simulation(psd_model, t, 10, 10)
  
  We can now sample the generative model.
 ```@example simulation_univariate
-t_obs,x, σ = sample(rng, simu, error_size = 0.25)
+t_obs, x, σ = sample(rng, simu, error_size = 0.25)
 scatter(t_obs, x, label = nothing, yerr = σ, xlabel = "Time (days)", ylabel = "Value", framestyle = :box, ms = 2)
+```
+
+
+## With custom errorbars
+
+It is possible to give the errorbars to randomise the data. The errorbars are given as a vector of the same length as the time stamps.
+
+```@example simulation_univariate
+simu = Simulation(psd_model, t)
+σs = 0.1 .+ 0.1 * rand(rng, length(t_obs))
+
+t_obs, x, σ = sample(rng, simu, σₓ=σs)
+@assert σ==σs
+scatter(t_obs, x, label = nothing, yerr = σs, xlabel = "Time (days)", ylabel = "Value", framestyle = :box, ms = 2)
 ```
