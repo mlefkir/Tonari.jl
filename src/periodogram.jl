@@ -28,11 +28,14 @@ use the real-valued fast Fourier transform (rfft) to compute the periodogram.
 function periodogram(t, y, normalisation = "default"; apply_end_matching = false, subtract_mean = true)
 
 	@assert length(t) == size(y, 1) "The length of the time stamps must be the same as the length of the time series."
+	
+	dt = unique(diff(t))
+	@assert length(dt) == 1  || all(isapprox.(dt,dt[1])) "The time stamps are not equally spaced! Check your time array!"
 
 	average_periodogram = false
 	if ndims(y) == 2
 		if size(y, 2) > 1
-			println("Multiple time series detected. Computing the average periodogram.")
+			@info "Multiple time series detected. Computing the average periodogram."
 			average_periodogram = true
 		end
 	end
@@ -114,7 +117,7 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 			average_periodogram = true
 			n_segments = size(y₁, 2)
 			if n_segments < 20
-				println("Warning: The number of segments is less than 20. The coherence and lags may not be reliable.")
+				@warn "Warning: The number of segments is less than 20. The coherence and lags may not be reliable."
 			end
 		end
 	end
@@ -126,11 +129,11 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 	f = rfftfreq(size(y₁, 1), 1 / Δt)[2:end] # remove the zero frequency
 	f2 = range(fmin, step=fmin, fmax)
 
-	if normalisation == "default"
-		normalisation = 2Δt / length(t)
-	else
-		error("Normalisation $normalisation not recognised.")
-	end
+	# if normalisation == "default"
+	# 	normalisation = 2Δt / length(t)
+	# else
+	# 	error("Normalisation $normalisation not recognised.")
+	# end
 
 	# detrend the data
 	if apply_end_matching
@@ -182,41 +185,45 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 	P̄₂ = mean(P₂, dims = 2)
 
 	if compute_coherence
-		# compute the raw coherence
-		γ² = abs.(C̄) .^ 2 ./ (P̄₁ .* P̄₂)
-		γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010)
-
-		# compute the phase lags
-		Δφ = angle.(C̄)
-		Δφ_err = (1 .- γ²) ./ .√(2 .* abs.(γ²) .* n_segments)
-
-		# compute the time lags
-		Δτ = Δφ ./ (2π .* f)
-		Δτ_err = Δφ_err ./ (2π .* f)
-
-		if !isnothing(y₁_err) && !isnothing(y₂_err)
-			# compute corrected coherence
-
-			# noise powers
-			N₁ = length(t) * mean(y₁_err .^ 2)
-			N₂ = length(t) * mean(y₂_err .^ 2)
-
-			# intrinsic powers
-			S₁ = P̄₁ .- N₁
-			S₂ = P̄₂ .- N₂
-
-			# 
-			n² = (S₁ .* N₂ .+ N₁ .* S₂ .+ N₁ .* N₂) ./ n_segments
-			γ²_corrected = (abs.(C̄) .^ 2 .- n²) ./ (S₁ .* S₂)
-
-			a = (2 * n_segments .* n² .^ 2) ./ ((abs.(C̄) .^ 2 .- n²) .^ 2)
-			b = N₁^2 ./ S₁ .^ 2 .+ N₂^2 ./ S₂ .^ 2
-			c = n_segments .* γ²_err ./ γ² .^ 2
-			γ²_corrected_err = 1 / √n_segments .* sqrt.(a .+ b .+ c)
-			return f,f2, γ², γ²_corrected, Δφ, γ²_err, γ²_corrected_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, N₁, N₂, n²
-
-		end
-		return f, γ², Δφ, γ²_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, C
+		return coherence(f,C̄,P̄₁,P̄₂,n_segments, y₁_err, y₂_err)
 	end
 	return f, C̄, P̄₁, P̄₂, C
+end
+
+function coherence(f,C̄,P̄₁,P̄₂,n_segments,y₁_err = nothing, y₂_err = nothing)
+	# compute the raw coherence
+	γ² = abs.(C̄) .^ 2 ./ (P̄₁ .* P̄₂)
+	γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010)
+
+	# compute the phase lags
+	Δφ = angle.(C̄)
+	Δφ_err = (1 .- γ²) ./ .√(2 .* abs.(γ²) .* n_segments)
+
+	# compute the time lags
+	Δτ = Δφ ./ (2π .* f)
+	Δτ_err = Δφ_err ./ (2π .* f)
+
+	if !isnothing(y₁_err) && !isnothing(y₂_err)
+		# compute corrected coherence
+
+		# noise powers
+		N₁ = size(y₁_err,1) * mean(y₁_err .^ 2)
+		N₂ = size(y₁_err,1) * mean(y₂_err .^ 2)
+
+		# intrinsic powers
+		S₁ = P̄₁ .- N₁
+		S₂ = P̄₂ .- N₂
+
+		# 
+		n² = (S₁ .* N₂ .+ N₁ .* S₂ .+ N₁ .* N₂) ./ n_segments
+		γ²_corrected = (abs.(C̄) .^ 2 .- n²) ./ (S₁ .* S₂)
+
+		a = (2 * n_segments .* n² .^ 2) ./ ((abs.(C̄) .^ 2 .- n²) .^ 2)
+		b = N₁^2 ./ S₁ .^ 2 .+ N₂^2 ./ S₂ .^ 2
+		c = n_segments .* γ²_err ./ γ² .^ 2
+		γ²_corrected_err = 1 / √n_segments .* sqrt.(a .+ b .+ c)
+		return f, γ², γ²_corrected, Δφ, γ²_err, γ²_corrected_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, N₁, N₂, n²
+
+	end
+	return f, γ², Δφ, γ²_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, C
 end

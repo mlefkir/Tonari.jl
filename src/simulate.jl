@@ -29,8 +29,8 @@ struct Simulation{Tp <: Model, Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
 end
 
 function _regular_sampling(model::Model, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
-	t = range(start = 0, stop = T - Δt, step = Δt)
-	return Simulation(model, T - Δt, Δt, S_high, S_low, t)
+	t = range(start = 0, stop = T , step = Δt)
+	return Simulation(model, T , Δt, S_high, S_low, t)
 end
 
 Simulation(model::Tp, T::Tt, Δt::Ts) where {Tp <: Model, Tt <: Real, Ts <: Real} = _regular_sampling(model, T, Δt, 10.0, 10.0)
@@ -118,7 +118,7 @@ end
 Split a long time series into shorter time series.
 Break the time series into `n_slices` shorter time series. The short time series are of equal length.
 
-# Arguments
+# ArgumentsT
 - `t`: The time indexes of the long time series.
 - `ts`: The values of the long time series.
 - `n_slices`: The number of slices to break the time series into.
@@ -245,7 +245,23 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if n_bands == 1
 		xₛ_full = xₛ_full[1]
 	end
-	return times, xₛ_full
+	@assert t_desired[1:end-1] ≈ times[1:end-1] "The sampled times are not approximatively equal to the desired times"
+	if t_desired[end]≈times[end]
+		return times, xₛ_full
+	else
+		@warn "Removing the last point as it is not at the right time stamp"
+		#remove the last point
+		y = []
+		for j in 1:n_bands
+			if n_bands == 1
+				y = xₛ_full[1:end-1,:]
+				# push!(y,xₛ_full[1:end-1,:])
+			else
+				push!(y,xₛ_full[j][1:end-1,:])
+			end
+		end
+		return times[1:end-1],y
+	end
 end
 
 @doc raw"""
@@ -410,7 +426,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 	end
 
 	# split the long time series and resample at the desired time stamps
-	times, xₛ = sample_split_timeseries(x, t, sim.t, n_sim, n, n_slices, split_long)
+	times, xₛ = sample_split_timeseries(x, t, sim.t[1:end-1], n_sim, n, n_slices, split_long)
 
 	# return the time series without randomising the values
 	if !randomise_values
