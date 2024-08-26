@@ -94,6 +94,14 @@ function Base.:+(a::PowerSpectralDensity, b::PowerSpectralDensity)
     SumOfPowerSpectralDensity([a, b])
 end
 
+function Base.:+(a::PowerSpectralDensity, b::SumOfPowerSpectralDensity)
+    SumOfPowerSpectralDensity([a; b.psd])
+end
+
+function Base.:+(a::SumOfPowerSpectralDensity, b::PowerSpectralDensity)
+    SumOfPowerSpectralDensity([a.psd; b])
+end
+
 function calculate(f, model::SumOfPowerSpectralDensity)
     sum(p(f) for p in model.psd)
 end
