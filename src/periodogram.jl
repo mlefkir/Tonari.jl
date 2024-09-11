@@ -28,9 +28,9 @@ use the real-valued fast Fourier transform (rfft) to compute the periodogram.
 function periodogram(t, y, normalisation = "default"; apply_end_matching = false, subtract_mean = true)
 
 	@assert length(t) == size(y, 1) "The length of the time stamps must be the same as the length of the time series."
-	
+
 	dt = unique(diff(t))
-	@assert length(dt) == 1  || all(isapprox.(dt,dt[1])) "The time stamps are not equally spaced! Check your time array!"
+	@assert length(dt) == 1 || all(isapprox.(dt, dt[1])) "The time stamps are not equally spaced! Check your time array!"
 
 	average_periodogram = false
 	if ndims(y) == 2
@@ -90,12 +90,32 @@ function periodogram(t, y, normalisation = "default"; apply_end_matching = false
 end
 
 @doc raw"""
-	cross_periodogram(y₁, y₂, t, normalisation = "default"; apply_end_matching = false, subtract_mean = true)
+	cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing; compute_coherence = true, apply_end_matching = false, subtract_mean = true)
 
-	
+Compute the cross-periodogram between two time series y₁ and y₂ with time stamps t using the fast Fourier transform (FFT).
+
+# Arguments
+- `t::Array{Float64, 1}`: Time stamps.
+- `y₁::Array{Float64, 1}`: First time series data. Or a matrix of multiple time series. 
+- `y₂::Array{Float64, 1}`: Second time series data. Or a matrix of multiple time series.
+- `y₁_err::Array{Float64, 1}`: Error in the first time series. Or a matrix of errors for multiple time series.
+- `y₂_err::Array{Float64, 1}`: Error in the second time series Or a matrix of errors for multiple time series.
+- `compute_coherence::Bool`: Compute the coherence between the two time series. Default is true.
+- `apply_end_matching::Bool`: Apply end-matching to the data. Default is false.
+- `subtract_mean::Bool`: Subtract the mean from the data. Default is true.
+
+If compute_coherence  is true, the function returns the coherence between the two time series. Otherwise, it returns the cross-periodogram and the mean power spectra of the two time series.
+see `coherence` function for the optional returns.
+
+# Returns
+- `f::Array{Float64, 1}`: Frequency array.
+- `C̄::Array{Complex{Float64}, 1}`: Mean cross-periodogram.
+- `P̄₁::Array{Float64, 1}`: Mean power spectrum of the first time series.
+- `P̄₂::Array{Float64, 1}`: Mean power spectrum of the second time series.
+- `C::Array{Complex{Float64}, 1}`: Cross-periodogram.
 
 """
-function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing, normalisation = "default"; compute_coherence = true, apply_end_matching = false, subtract_mean = true)
+function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing; compute_coherence = true, apply_end_matching = false, subtract_mean = true)
 
 	# checks on the input data
 	@assert size(y₁) == size(y₂) "The size of the two time series must be the same."
@@ -127,13 +147,7 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 	T = t[end] - t[1]
 	fmin, fmax = 1 / T, 1 / (2Δt)
 	f = rfftfreq(size(y₁, 1), 1 / Δt)[2:end] # remove the zero frequency
-	f2 = range(fmin, step=fmin, fmax)
-
-	# if normalisation == "default"
-	# 	normalisation = 2Δt / length(t)
-	# else
-	# 	error("Normalisation $normalisation not recognised.")
-	# end
+	f2 = range(fmin, step = fmin, fmax)
 
 	# detrend the data
 	if apply_end_matching
@@ -185,12 +199,75 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 	P̄₂ = mean(P₂, dims = 2)
 
 	if compute_coherence
-		return coherence(f,C̄,P̄₁,P̄₂,n_segments, y₁_err, y₂_err)
+		return coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err, y₂_err)
 	end
 	return f, C̄, P̄₁, P̄₂, C
 end
 
-function coherence(f,C̄,P̄₁,P̄₂,n_segments,y₁_err = nothing, y₂_err = nothing)
+@doc raw"""
+	coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err = nothing, y₂_err = nothing)
+
+Compute the coherence between two time series defined in [1997ApJ...474L..43V](@cite) using the cross-periodogram `C̄`, the mean power spectrum of the first time series `P̄₁`, and the mean power spectrum of the second time series `P̄₂`. The coherence is defined as:
+
+```math
+\gamma^2 (f) = \frac{|\overline{C}(f)|^2}{\overline{P}_1(f) \overline{P}_2(f)}
+```
+with the error in the coherence given by:
+
+```math
+\sigma_{\gamma^2} = \sqrt{2} \sqrt{\gamma^2} \frac{1 - \gamma^2}{\sqrt{M}}
+```
+
+where `M` is the number of segments over which the coherence is computed.
+
+The phase lag is defined as:
+
+```math
+\Delta \phi (f) = \arg \overline{C}(f)
+```
+
+with the error in the phase lag given by:
+
+```math
+\sigma_{\Delta \phi} = \frac{1 - \gamma^2}{\sqrt{2 \gamma^2 M}}
+```
+
+The time lag is defined as:
+
+```math
+\Delta \tau (f) = \frac{\Delta \phi}{2 \pi f}
+```
+
+with the error in the time lag given by:
+
+```math
+\sigma_{\Delta \tau} = \frac{\sigma_{\Delta \phi}}{2 \pi f}
+```
+
+If the errors in the time series are provided, the corrected coherence is computed using the method described in [1997ApJ...474L..43V](@cite).
+
+# Arguments
+- `f::Array{Float64, 1}`: Frequency array.
+- `C̄::Array{Complex{Float64}, 1}`: Cross-periodogram.
+- `P̄₁::Array{Float64, 1}`: Mean power spectrum of the first time series.
+- `P̄₂::Array{Float64, 1}`: Mean power spectrum of the second time series.
+- `n_segments::Int`: Number of segments over which the coherence is computed.
+- `y₁_err::Array{Float64, 1}`: Error in the first time series.
+- `y₂_err::Array{Float64, 1}`: Error in the second time series.
+
+if the errors in the time series are not provided, the function returns the coherence, phase lag, and time lag. Otherwise, it returns the corrected coherence, phase lag, and time lag.
+
+# Returns
+- `f::Array{Float64, 1}`: Frequency array.
+- `γ²::Array{Float64, 1}`: Coherence.
+- `Δφ::Array{Float64, 1}`: Phase lag.
+- `γ²_err::Array{Float64, 1}`: Error in the coherence.
+- `Δφ_err::Array{Float64, 1}`: Error in the phase lag.
+- `Δτ::Array{Float64, 1}`: Time lag.
+- `Δτ_err::Array{Float64, 1}`: Error in the time lag.
+- `P̄₁::Array{Float64, 1}`: Mean power spectrum of the first time series.
+"""
+function coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err = nothing, y₂_err = nothing)
 	# compute the raw coherence
 	γ² = abs.(C̄) .^ 2 ./ (P̄₁ .* P̄₂)
 	γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010)
@@ -207,8 +284,8 @@ function coherence(f,C̄,P̄₁,P̄₂,n_segments,y₁_err = nothing, y₂_err =
 		# compute corrected coherence
 
 		# noise powers
-		N₁ = size(y₁_err,1) * mean(y₁_err .^ 2)
-		N₂ = size(y₁_err,1) * mean(y₂_err .^ 2)
+		N₁ = size(y₁_err, 1) * mean(y₁_err .^ 2)
+		N₂ = size(y₁_err, 1) * mean(y₂_err .^ 2)
 
 		# intrinsic powers
 		S₁ = P̄₁ .- N₁

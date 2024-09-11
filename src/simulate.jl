@@ -29,8 +29,8 @@ struct Simulation{Tp <: Model, Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
 end
 
 function _regular_sampling(model::Model, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
-	t = range(start = 0, stop = T , step = Δt)
-	return Simulation(model, T , Δt, S_high, S_low, t)
+	t = range(start = 0, stop = T, step = Δt)
+	return Simulation(model, T, Δt, S_high, S_low, t)
 end
 
 Simulation(model::Tp, T::Tt, Δt::Ts) where {Tp <: Model, Tt <: Real, Ts <: Real} = _regular_sampling(model, T, Δt, 10.0, 10.0)
@@ -175,7 +175,19 @@ end
 @doc raw"""
 	sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
 
-Split the time series into shorter `.
+Split the time series into shorter time series and sample at the desired time stamps.
+
+# Arguments
+- `x::Array{Float64, 1}` or `Vector{Matrix{Float64}}`: The values of the time series. If there are multiple bands, the time series is a vector of matrices.
+- `t::Array{Float64, 1}`: The time indexes of the time series.
+- `t_desired::Array{Float64, 1}`: The desired time stamps.
+- `n_sim::Int`: The number of simulations.
+- `n::Int`: The number of time series to generate.
+- `n_slices::Int`: The number of slices to break the time series into.
+- `split_long::Bool`: If true, the time series is split into shorter time series. Default is true.
+
+# Returns
+- A tuple of two arrays: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
 """
 function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
 
@@ -219,7 +231,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 							break
 						end
 					end
-					times = t_long[1][indexes]
+					times = t_long[1][indexes] .-t_long[1][indexes][1]
 				end
 			end
 
@@ -245,8 +257,8 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if n_bands == 1
 		xₛ_full = xₛ_full[1]
 	end
-	@assert t_desired[1:end-1] ≈ times[1:end-1] "The sampled times are not approximatively equal to the desired times"
-	if t_desired[end]≈times[end]
+	@assert t_desired[1:end-1] ≈ times[1:end-1] "The sampled times are not approximatively equal to the desired times $t_desired and $times"
+	if t_desired[end] ≈ times[end]
 		return times, xₛ_full
 	else
 		@warn "Removing the last point as it is not at the right time stamp"
@@ -254,18 +266,18 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 		y = []
 		for j in 1:n_bands
 			if n_bands == 1
-				y = xₛ_full[1:end-1,:]
+				y = xₛ_full[1:end-1, :]
 				# push!(y,xₛ_full[1:end-1,:])
 			else
-				push!(y,xₛ_full[j][1:end-1,:])
+				push!(y, xₛ_full[j][1:end-1, :])
 			end
 		end
-		return times[1:end-1],y
+		return times[1:end-1], y
 	end
 end
 
 @doc raw"""
-	draw_errorbars(rng, x, Δt, poisson=false, Fvar=nothing, error_size=0.05)
+	draw_errorbars(rng, x, Δt, poisson=false, error_size=0.05)
 
 Draw errorbars for the time series.
 
@@ -274,10 +286,9 @@ Draw errorbars for the time series.
 - `x::Array{Float64, 1}`: The values of the time series.
 - `Δt::Real`: The sampling period.
 - `poisson::Bool`: If true, Poisson noise is added to the time series. Default is false.
-- `Fvar::Real`: The variance of the time series. Default is nothing.
 - `error_size::Real`: The size of the error. Default is 0.05.
 """
-function draw_errorbars(rng, x, Δt, poisson = false, Fvar = nothing, error_size = 0.05)
+function draw_errorbars(rng, x, Δt, poisson = false, error_size = 0.05)
 
 	if poisson
 		σₓ = sqrt.(x .* Δt) ./ Δt
@@ -322,14 +333,14 @@ function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; σ = nothing, Fvar =
 			xₛ[xₛ.<=0] .= 0
 		end
 		x = rand.(rng, Poisson.(xₛ .* Δt)) ./ Δt
-		σₓ = draw_errorbars(rng, x, Δt, true, Fvar, error_size)
+		σₓ = draw_errorbars(rng, x, Δt, true, error_size)
 
 	else
 		if exponentiate
 			xₛ = exp.(xₛ)
 		end
 		if isnothing(σ)
-			σₓ = draw_errorbars(rng, xₛ, Δt, false, Fvar, error_size)
+			σₓ = draw_errorbars(rng, xₛ, Δt, false, error_size)
 		else
 			@assert all(σ .>= 0.0) "The errorbars are not positive"
 			σₓ = σ
@@ -344,7 +355,7 @@ function randomise_fluxes(rng, xₛ, Δt, input_mean = 0.0; σ = nothing, Fvar =
 end
 
 @doc raw"""
-	sample(rng, sim, n=1, input_mean=0; split_long=false, randomise_values=true, Fvar=nothing, alt=false, poisson=false, exponentiate=false, error_size=0.02)
+	sample(rng, sim, n=1, input_mean=0; σₓ = nothing, split_long=false, randomise_values=true, Fvar=nothing, alt=false, poisson=false, exponentiate=false, error_size=0.02)
 
 Generate a time series with a given power spectral density (PSD) using the [1995A&A...300..707T](@cite) method.
 
@@ -353,6 +364,7 @@ Generate a time series with a given power spectral density (PSD) using the [1995
 - `sim::Simulation`: The simulation 
 - `n::Int`: Number of time series to generate. Default is 1.
 - `input_mean::Real`: The mean of the time series. Default is 0.
+- `σₓ::Array{Float64, 1}`: The errorbars of the time series. Default is nothing.
 - `split_long::Bool`: If true, the time series is split into shorter time series given by `sim.S_low`-1. Default is true.
 - `randomise_values::Bool`: If true, the values of the time series are randomised. Default is true.
 - `Fvar::Real`: The variance of the time series. Default is nothing.
