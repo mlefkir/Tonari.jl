@@ -1,4 +1,4 @@
-using Test, Tonari, Random, Distributions
+using Test, Tonari, Random, Distributions, DelimitedFiles
 
 function setup_model()
 	SingleBendingPowerLaw(7e2, 0.13, 9e-2, 3.42)
@@ -22,7 +22,7 @@ function init_simu_regular_bis()
 	T, Δt = 302.13, 0.0321
 	sim = Simulation(model, T, Δt)
 	@test sim.model == model
-	@test sim.T == T 
+	@test sim.T == T
 	@test sim.Δt == Δt
 	@test sim.t == 0:Δt:T
 end
@@ -53,7 +53,7 @@ function init_simu_regular_extend()
 	T, Δt = 302.13, 0.0321
 	sim = Simulation(model, T, Δt, 15.5, 14.4)
 	@test sim.model == model
-	@test sim.T == T 
+	@test sim.T == T
 	@test sim.Δt == Δt
 	@test sim.t == 0:Δt:T
 	@test sim.S_high == 15.5
@@ -88,6 +88,24 @@ function init_simu_irregular_extend()
 	@test sim.S_low == 14.4
 end
 
+function init_simu_irregular_load()
+	model = setup_model()
+	rng = MersenneTwister(1234)
+	t = vec(readdlm("data/sampling_1yr_f9.txt"))
+	t = sort(t)
+	t = unique(t)
+	t .-= t[1]
+
+	sim = Simulation(model, t, 15.5, 14.4)
+	@test sim.model == model
+	@test sim.T == t[end]
+	@test sim.Δt == minimum(diff(t))
+	@test sim.t == t
+	@test sim.S_high == 15.5
+	@test sim.S_low == 14.4
+end
+
+
 
 ## Test the sampling of the Simulation object
 
@@ -114,7 +132,7 @@ function sample_simu_regular_n()
 	n = 3
 	rng = MersenneTwister(124)
 	tx, x, σ = sample(rng, sim, n)
-	N = convert(Int, T/ Δt)
+	N = convert(Int, T / Δt)
 	@test tx ≈ sim.t[1:end-1]
 	@test size(x) == size(σ)
 	@test size(x) == (N, n)
@@ -159,13 +177,39 @@ function sample_simu_regular_error()
 	sim, T, Δt = setUp_simu_regular()
 	n = 3
 	rng = MersenneTwister(2346)
-    N = convert(Int, T / Δt)
+	N = convert(Int, T / Δt)
 	σ = rand(rng, N)
-    tx, x, σs = sample(rng, sim, n, σₓ = σ)
-	@test size(x,1) == size(σ,1)
-	@test σ==σs
+	tx, x, σs = sample(rng, sim, n, σₓ = σ)
+	@test size(x, 1) == size(σ, 1)
+	@test σ == σs
 end
 
+function sample_simu_irregular_load()
+	model = setup_model()
+	rng = MersenneTwister(1234)
+	t = vec(readdlm("data/sampling_1yr_f9.txt"))
+	t = sort(t)
+	t = unique(t)
+	t .-= t[1]
+
+	sim = Simulation(model, t, 15.5, 14.4)
+	n = 3
+	tx, x, σs = sample(rng, sim, n)
+	@test size(x, 1) == size(σs, 1)
+	# @test size(x, 2) == (length(t)-1, n)
+end
+
+function sample_simu_irregular_extend()
+	model = setup_model()
+	rng = MersenneTwister(1234)
+	t = rand(rng, 0:0.0213:236.53, 105)
+	t = sort(t)
+	t = unique(t)
+	t .-= t[1]
+	n = 3
+	sim = Simulation(model, t, 15.5, 14.4)
+	tx, x, σs = sample(rng, sim, n)
+end
 
 
 @testset "Simulations" begin
@@ -181,6 +225,7 @@ end
 				init_simu_irregular()
 				init_simu_irregular_extend()
 				init_simu_irregular_unsorted()
+				init_simu_irregular_load()
 			end
 		end
 		@testset "Sampling" begin
@@ -190,7 +235,11 @@ end
 				sample_simu_regular_n_nosplit()
 				sample_simu_regular_poisson()
 				sample_simu_regular_expo()
-                sample_simu_regular_error()
+				sample_simu_regular_error()
+			end
+			@testset "Irregular" begin
+				sample_simu_irregular_load()
+				sample_simu_irregular_extend()
 			end
 		end
 	end
