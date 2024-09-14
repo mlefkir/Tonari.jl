@@ -150,13 +150,18 @@ end
 Find the nearest value in `b` to each value in `a`.
 This assumes that a and b are sorted.
 """
-function findnearest(a, b)
+function findnearest(a, b; tol = 0.0)
 	@assert issorted(a) && issorted(b)
 	indexes = []
 	j = 1
 	for i in eachindex(a)
-		while !(b[j] ≈ a[i]) && j < length(b)
+		while j < length(b) && !(isapprox(b[j], a[i], rtol = tol))
 			j += 1
+		end
+		if j == length(b) && (isapprox(b[j], a[i], rtol = tol))#!(b[j] ≈ a[i])
+			# If we reach the end and don't find an approximation, find the closest value
+			closest_idx = argmin(abs.(b .- a[i]))
+			j = closest_idx
 		end
 		push!(indexes, j)
 	end
@@ -168,8 +173,8 @@ end
 
 Extract a random subset of points from the time series.
 """
-function sample_timeseries(t, t_desired)
-	findnearest(t_desired, t)
+function sample_timeseries(t, t_desired; tol = 0.0)
+	findnearest(t_desired, t, tol = tol)
 end
 
 @doc raw"""
@@ -189,7 +194,7 @@ Split the time series into shorter time series and sample at the desired time st
 # Returns
 - A tuple of two arrays: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
 """
-function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
+function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long; tol = 0.0)
 
 	t_end = t_desired[end]
 	n_bands = 1
@@ -202,7 +207,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if split_long
 		if n_slices < 5
 			@warn "The number of slices is less than 5. Setting S_low to a high value is required.\nNot splitting the time series."
-			indexes = sample_timeseries(t, t_desired)
+			indexes = sample_timeseries(t, t_desired, tol = tol)
 			for j in 1:n_bands
 				if n_bands == 1
 					push!(xₛ, x[indexes, :])
@@ -224,7 +229,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 					end
 					for i in 1:n_slices
 						tcurr = collect(t_long[i]) .- t_long[i][1]
-						indexes = sample_timeseries(tcurr, t_desired)
+						indexes = sample_timeseries(tcurr, t_desired, tol = tol)
 						push!(xₛ[k], x_long[i][indexes])
 						l += 1
 						if l == n # if we have the desired number of time series
@@ -243,7 +248,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 		t = t[indexes_t]
 		# x = x[:][indexes_t, :]
 		# change the time series to the desired time vector
-		indexes = sample_timeseries(t, t_desired)
+		indexes = sample_timeseries(t, t_desired, tol = tol)
 		for j in 1:n_bands
 			if n_bands == 1
 				push!(xₛ, x[indexes_t, :][indexes, :])
@@ -257,8 +262,8 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if n_bands == 1
 		xₛ_full = xₛ_full[1]
 	end
-	@assert t_desired[1:end-1] ≈ times[1:end-1] "The sampled times are not approximatively equal to the desired times $t_desired and $times"
-	if t_desired[end] ≈ times[end]
+	@assert isapprox(t_desired[1:end-1], times[1:end-1], rtol = tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
+	if isapprox(t_desired[end], times[end], rtol = tol)
 		return times, xₛ_full
 	else
 		@warn "Removing the last point as it is not at the right time stamp"
@@ -438,7 +443,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 	end
 
 	# split the long time series and resample at the desired time stamps
-	times, xₛ = sample_split_timeseries(x, t, sim.t[1:end-1], n_sim, n, n_slices, split_long)
+	times, xₛ = sample_split_timeseries(x, t, sim.t[1:end-1], n_sim, n, n_slices, split_long, tol = Δτ)
 
 	# return the time series without randomising the values
 	if !randomise_values
