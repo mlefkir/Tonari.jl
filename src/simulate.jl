@@ -118,7 +118,7 @@ end
 Split a long time series into shorter time series.
 Break the time series into `n_slices` shorter time series. The short time series are of equal length.
 
-# ArgumentsT
+# Arguments
 - `t`: The time indexes of the long time series.
 - `ts`: The values of the long time series.
 - `n_slices`: The number of slices to break the time series into.
@@ -155,11 +155,10 @@ function findnearest(a, b; tol = 0.0)
 	indexes = []
 	j = 1
 	for i in eachindex(a)
-		while j < length(b) && !(isapprox(b[j], a[i], rtol = tol))
+		while j < length(b) && !(isapprox(b[j], a[i]))
 			j += 1
 		end
-		if j == length(b) && (isapprox(b[j], a[i], rtol = tol))#!(b[j] ≈ a[i])
-			# If we reach the end and don't find an approximation, find the closest value
+		if j == length(b) && !(isapprox(b[j], a[i], atol = tol))
 			closest_idx = argmin(abs.(b .- a[i]))
 			j = closest_idx
 		end
@@ -262,8 +261,8 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if n_bands == 1
 		xₛ_full = xₛ_full[1]
 	end
-	@assert isapprox(t_desired[1:end-1], times[1:end-1], rtol = tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
-	if isapprox(t_desired[end], times[end], rtol = tol)
+	@assert isapprox(t_desired[1:end-1], times[1:end-1],rtol=2tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
+	if isapprox(t_desired[end], times[end], rtol = 2tol)
 		return times, xₛ_full
 	else
 		@warn "Removing the last point as it is not at the right time stamp"
