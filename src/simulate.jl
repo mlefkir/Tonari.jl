@@ -262,7 +262,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 		xₛ_full = xₛ_full[1]
 	end
 	@assert isapprox(t_desired[1:end-1], times[1:end-1],rtol=2tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
-	if isapprox(t_desired[end], times[end], rtol = 2tol)
+	if isapprox(t_desired[end], times[end])
 		return times, xₛ_full
 	else
 		@warn "Removing the last point as it is not at the right time stamp"

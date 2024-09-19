@@ -34,7 +34,7 @@ jobs:
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: mlefkir/Pioran.jl
+          slug: mlefkir/Tonari.jl
           files: lcov.info
 
         # with:
