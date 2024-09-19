@@ -7,12 +7,14 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"), style = :autho
 
 makedocs(sitename = "Tonari.jl",
 	pages = ["Home" => "index.md",
-		"Simulations" => ["simulations.md","simulations_delays.md"],
-        "Spectral analysis" => ["periodogram.md"],
-		"References" => "references.md", 
-        "API Reference" => "api.md",
-	], format = Documenter.HTML(description = "Tonari.jl:", prettyurls = true), plugins = [bib])
+		"Simulations" => ["simulations.md", "simulations_delays.md"],
+		"Spectral analysis" => ["periodogram.md"],
+		"References" => "references.md",
+		"API Reference" => "api.md",
+	],
+	format = Documenter.HTML(description = "Tonari.jl:", prettyurls = true),
+	plugins = [bib])
 
 deploydocs(
-	repo = "github.com/mlefkir/Tonari.jl.git",
+	repo = "github.com/mlefkir/Tonari.jl.git",push_preview=true
 )
