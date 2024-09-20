@@ -133,7 +133,7 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 				error("Cannot compute coherence or lags without several segments of the full time series.")
 			end
 		else
-			println("Multiple time series detected. Computing the average cross-periodogram.")
+			@info "Multiple time series detected. Computing the average cross-periodogram."
 			average_periodogram = true
 			n_segments = size(y₁, 2)
 			if n_segments < 20
@@ -270,7 +270,9 @@ if the errors in the time series are not provided, the function returns the cohe
 function coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err = nothing, y₂_err = nothing)
 	# compute the raw coherence
 	γ² = abs.(C̄) .^ 2 ./ (P̄₁ .* P̄₂)
-	γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010)
+	γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010) as square root of the variance
+
+	
 
 	# compute the phase lags
 	Δφ = angle.(C̄) # between -π and π
@@ -302,5 +304,5 @@ function coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err = nothing, y₂_
 		return f, γ², γ²_corrected, Δφ, γ²_err, γ²_corrected_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, N₁, N₂, n²
 
 	end
-	return f, γ², Δφ, γ²_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, C
+	return f, γ², Δφ, γ²_err, Δφ_err, Δτ, Δτ_err, P̄₁, P̄₂, C̄
 end

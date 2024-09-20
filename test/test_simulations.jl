@@ -4,6 +4,26 @@ function setup_model()
 	SingleBendingPowerLaw(7e2, 0.13, 9e-2, 3.42)
 end
 
+function setup_model_multivariate_time()
+	p1 = SingleBendingPowerLaw(1.0, 0.63, 10e-2, 3.22)
+	p2 = SingleBendingPowerLaw(1.0, 0.78, 13e-2, 3.81)
+	Δϕ = ConstantTimeLag(100.35)
+	cp = CrossSpectralDensity(p1, p2, Δϕ)
+end
+
+function setup_model_multivariate_phase()
+	p1 = SingleBendingPowerLaw(1.0, 0.63, 10e-2, 3.22)
+	p2 = SingleBendingPowerLaw(1.0, 0.78, 13e-2, 3.81)
+	Δϕ = ConstantPhaseLag(35.35, 2.3)
+	cp = CrossSpectralDensity(p1, p2, Δϕ)
+end
+
+
+function setup_model_multivariate_same_psd()
+	p1 = SingleBendingPowerLaw(1.0, 0.63, 10e-2, 3.22)
+	Δϕ = ConstantPhaseLag(35.35, 2.3)
+	cp = CrossSpectralDensity(p1, p1, Δϕ)
+end
 
 ## Test the initialisation of the Simulation object
 function init_simu_regular()
@@ -212,6 +232,70 @@ function sample_simu_irregular_extend()
 end
 
 
+# Test the sampling of the Simulation object with a cross-spectral density
+function sample_simu_cross_spectral_time()
+	model = setup_model_multivariate_time()
+	T = 200.0
+	Δt = 0.1
+	sim = Simulation(model, T, Δt)
+	n = 4
+	tx, x, σ = sample(MersenneTwister(1234), sim, n)
+
+	@test size(x,1) == 2
+	@test size(σ,1) == 2
+	@test size(x[1]) == size(x[2])
+	@test size(x[1]) == size(σ[1])
+	@test size(x[1]) == size(σ[2])
+	@test size(x[1],1) == size(tx,1)
+end
+
+function sample_simu_cross_spectral_phase()
+	model = setup_model_multivariate_phase()
+	T = 200.0
+	Δt = 0.1
+	sim = Simulation(model, T, Δt)
+	n = 4
+	tx, x, σ = sample(MersenneTwister(1234), sim, n)
+
+	@test size(x,1) == 2
+	@test size(σ,1) == 2
+	@test size(x[1]) == size(x[2])
+	@test size(x[1]) == size(σ[1])
+	@test size(x[1]) == size(σ[2])
+	@test size(x[1],1) == size(tx,1)
+end
+function sample_simu_cross_spectral_same_psd()
+	model = setup_model_multivariate_same_psd()
+	T = 200.0
+	Δt = 0.1
+	sim = Simulation(model, T, Δt)
+	n = 4
+	t, x, σ = sample(MersenneTwister(1234), sim, n)
+
+	@test size(x,1) == 2
+	@test size(σ,1) == 2
+
+	@test size(x[1]) == size(x[2])
+	@test size(x[1]) == size(σ[1])
+	@test size(x[1]) == size(σ[2])
+	@test size(x[1],1) == size(t,1)
+end
+
+function sample_simu_cross_spectral_no_rand()
+	model = setup_model_multivariate_same_psd()
+	T = 200.0
+	Δt = 0.1
+	sim = Simulation(model, T, Δt)
+	n = 4
+	t, x = sample(MersenneTwister(1234), sim, n,randomise_values = false)
+
+	@test size(x[1],1) == size(t,1)
+	@test size(x,1) == 2
+	@test size(x[1]) == size(x[2])
+end
+
+
+
 @testset "Simulations" begin
 	@testset "Univariate" begin
 		@testset "Initialisation" begin
@@ -246,16 +330,10 @@ end
 	@testset "Multivariate" begin
 		@testset "Initialisation" begin
 			@testset "Regular" begin
-				init_simu_regular()
-				init_simu_regular_bis()
-				init_simu_regular_error()
-				init_simu_regular_extend()
-			end
-			@testset "Irregular" begin
-				init_simu_irregular()
-				init_simu_irregular_extend()
-				init_simu_irregular_unsorted()
-				init_simu_irregular_load()
+				sample_simu_cross_spectral_time()
+				sample_simu_cross_spectral_phase()
+				sample_simu_cross_spectral_same_psd()
+				sample_simu_cross_spectral_no_rand()
 			end
 		end
 	end

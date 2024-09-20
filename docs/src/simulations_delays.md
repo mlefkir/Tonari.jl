@@ -60,7 +60,7 @@ plot(p1, p2, layout=l,size=(800,600))
 ```@example simulation_delay
 p1 = SingleBendingPowerLaw(1.0, 0.63, 10e-2, 3.22)
 p2 = SingleBendingPowerLaw(1.0, 0.78, 13e-2, 3.81)
-Δϕ = ConstantPhaseLag(12.35,5*1/T)
+Δϕ = ConstantPhaseLag(56.2,5*1/T)
 
 cs = CrossSpectralDensity(p1, p2, Δϕ)
 ```
@@ -96,14 +96,11 @@ p1 = scatter(f, γ²_corrected, yerr=γ²_corrected_err, label="γ² corrected",
 p1 = scatter!(f, γ², yerr=γ²_err, label="γ²", xscale=:log10,ylims=(0,1.1),ms=4,ylabel="Coherence",link=:x, framestyle=:box)
 
 p2 = scatter(f, Δφ, yerr=Δφ_err, xscale=:log10, ylabel="Time delay (d)",xlabel="Frequency (d^-1)",link=:x, framestyle=:box,label=nothing)
-# p2 = hline!([12.35],color=:black,label="True delay")
 p2 = plot!(f,calculate(Δϕ,f) .* 2 .*pi .* f )
 println(calculate(Δϕ,f[1]) .* 2 .*pi .* f[1] )
 
 p3 = scatter(f, Δτ, yerr=Δτ_err, xscale=:log10, ylabel="Time delay (d)",xlabel="Frequency (d^-1)",link=:x, framestyle=:box,label=nothing)
 p3 = plot!(f,-calculate(Δϕ,f) )
-
-# p3 = hline!([12.35],color=:black,label="True delay")
 
 plot(p1, p2,p3, layout=l,size=(800,900))
 ```
