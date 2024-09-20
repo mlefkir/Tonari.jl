@@ -273,7 +273,7 @@ function coherence(f, C̄, P̄₁, P̄₂, n_segments, y₁_err = nothing, y₂_
 	γ²_err = √2 .* .√abs.(γ²) .* (1.0 .- γ²) ./ √n_segments # Eq. 9.81 in Bendat and Piersol (2010)
 
 	# compute the phase lags
-	Δφ = angle.(C̄)
+	Δφ = angle.(C̄) # between -π and π
 	Δφ_err = (1 .- γ²) ./ .√(2 .* abs.(γ²) .* n_segments)
 
 	# compute the time lags

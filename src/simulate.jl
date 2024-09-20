@@ -235,7 +235,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 							break
 						end
 					end
-					times = t_long[1][indexes] .-t_long[1][indexes][1]
+					times = t_long[1][indexes] .- t_long[1][indexes][1]
 				end
 			end
 
@@ -261,7 +261,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 	if n_bands == 1
 		xₛ_full = xₛ_full[1]
 	end
-	@assert isapprox(t_desired[1:end-1], times[1:end-1],rtol=2tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
+	@assert isapprox(t_desired[1:end-1], times[1:end-1], rtol = 2tol) "The sampled times are not approximatively equal to the desired times times=$(maximum(abs.(t_desired[1:end-1]-times[1:end-1])))"
 	if isapprox(t_desired[end], times[end])
 		return times, xₛ_full
 	else
@@ -415,7 +415,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 
 	elseif sim.model isa CrossSpectralDensity
 
-		Δφ = exp.(im * 2π .* f .* calculate(sim.model.Δφ, f))
+		Δφ = exp.(im * π .* f .* calculate(sim.model.Δφ, f))
 
 		psd = sim.model.𝓟₁(f)
 		# get the randomised periodogram
@@ -466,4 +466,4 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 	return times, x, σₓ
 end
 
-Distributions.sample(sim::Simulation, n::Int = 1, alt::Bool = false) = Distributions.sample(Random.GLOBAL_RNG, sim, n, alt)
+Distributions.sample(sim::Simulation, n::Int = 1, input_mean = 0; σₓ = nothing, randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05) = Distributions.sample(Random.GLOBAL_RNG, sim, n, input_mean, σₓ=σₓ, randomise_values=randomise_values, split_long=split_long, Fvar=Fvar, alt=alt, poisson=poisson, exponentiate=exponentiate, error_size=error_size)

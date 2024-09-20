@@ -18,11 +18,11 @@ end
 Constant time lag model, stores the time lag between the two processes
 """
 struct ConstantTimeLag <: PhaseModel
-	Δt::Real
+	Δτ::Real
 end
 
 function calculate(Δφ::ConstantTimeLag, f)
-	return Δφ.Δt
+	return Δφ.Δτ * 2
 end
 
 @doc raw"""
@@ -40,5 +40,5 @@ struct ConstantPhaseLag <: PhaseModel
 end
 
 function calculate(Δφ::ConstantPhaseLag, f)
-	return @. Δφ.τ₀ * 2π * Δφ.f₀ / f
+	return @. Δφ.τ₀ * Δφ.f₀ / f * 2
 end

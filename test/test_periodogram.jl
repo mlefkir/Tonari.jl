@@ -13,25 +13,25 @@ end
 function test_periodogram_single()
     t, x, σ = setUp()
     f, I = periodogram(t,x) 
-    @assert length(f) ==length(I)
+    @test length(f) ==length(I)
 end
 
 function test_periodogram_average()
     t, x, σ = setUp(100)
     f, I = periodogram(t,x) 
-    @assert length(f) ==length(I)
+    @test length(f) ==length(I)
 end
 
 function test_periodogram_average_endmatch()
     t, x, σ = setUp(100)
     f, I = periodogram(t,x,apply_end_matching=true) 
-    @assert length(f) ==length(I)
+    @test length(f) ==length(I)
 end
 
 function test_periodogram_single_endmatch()
     t, x, σ = setUp()
     f, I = periodogram(t,x,apply_end_matching=true) 
-    @assert length(f) ==length(I)
+    @test length(f) ==length(I)
 end
 
 

@@ -243,4 +243,20 @@ end
 			end
 		end
 	end
+	@testset "Multivariate" begin
+		@testset "Initialisation" begin
+			@testset "Regular" begin
+				init_simu_regular()
+				init_simu_regular_bis()
+				init_simu_regular_error()
+				init_simu_regular_extend()
+			end
+			@testset "Irregular" begin
+				init_simu_irregular()
+				init_simu_irregular_extend()
+				init_simu_irregular_unsorted()
+				init_simu_irregular_load()
+			end
+		end
+	end
 end
