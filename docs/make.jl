@@ -16,5 +16,4 @@ makedocs(sitename = "Tonari.jl",
 	plugins = [bib])
 
 deploydocs(
-	repo = "github.com/mlefkir/Tonari.jl.git",push_preview=true, devbranch=split(ENV["GITHUB_REF"],"/")[end]
-)
+	repo = "github.com/mlefkir/Tonari.jl.git")
