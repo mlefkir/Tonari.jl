@@ -1,9 +1,9 @@
 # API Reference
 
 
-## Power spectral densities
+## Models
 
-### Models and functions
+### Power spectral densities
 
 ```@autodocs
 Modules = [Tonari]
@@ -17,5 +17,22 @@ Order   = [:type, :function]
 ```@autodocs
 Modules = [Tonari]
 Pages = ["simulate.jl"]
-Order   = [:function]
+Order = [:type, :function]
+```
+
+
+## Periodogram
+
+```@autodocs
+Modules = [Tonari]
+Pages = ["periodogram.jl"]
+Order = [:function]
+```
+
+## Utilities
+
+```@autodocs
+Modules = [Tonari]
+Pages = ["timeseries.jl"]
+Order = [:function]
 ```
