@@ -28,3 +28,11 @@ Modules = [Tonari]
 Pages = ["periodogram.jl"]
 Order = [:function]
 ```
+
+## Utilities
+
+```@autodocs
+Modules = [Tonari]
+Pages = ["timeseries.jl"]
+Order = [:function]
+```
