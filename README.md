@@ -4,7 +4,7 @@
 
 [![codecov](https://codecov.io/gh/mlefkir/Tonari.jl/branch/periodograms/graph/badge.svg?token=JFLB0ZE7ZY)](https://codecov.io/gh/mlefkir/Tonari.jl)
 
-Tonari is a Julia package for the analysis of time series with an emphasis on astronomical. I am implementing the methods and functions I need along the way, so it is a work in progress.
+Tonari is a Julia package for the analysis of time series with an emphasis on astronomical time series. I am implementing the methods and functions I need along the way, so it is a work in progress.
 
 Here are the current features:
 
