@@ -100,11 +100,11 @@ p1 = scatter(f, γ²_corrected, yerr=γ²_corrected_err, label="γ² corrected",
 p1 = scatter!(f, γ², yerr=γ²_err, label="γ²", xscale=:log10,ylims=(0,1.1),ms=4,ylabel="Coherence",link=:x, framestyle=:box)
 
 p2 = scatter(f, Δφ, yerr=Δφ_err, xscale=:log10, ylabel="Time delay (d)",xlabel="Frequency (d^-1)",link=:x, framestyle=:box,label=nothing)
-p2 = plot!(f,calculate(Δϕ,f) .* 2 .*pi .* f )
-println(calculate(Δϕ,f[1]) .* 2 .*pi .* f[1] )
+p2 = plot!(f,Δϕ(f) .* 2 .*pi .* f )
+println(Δϕ(f[1]) .* 2 .*pi .* f[1] )
 
 p3 = scatter(f, Δτ, yerr=Δτ_err, xscale=:log10, ylabel="Time delay (d)",xlabel="Frequency (d^-1)",link=:x, framestyle=:box,label=nothing)
-p3 = plot!(f,-calculate(Δϕ,f) )
+p3 = plot!(f,-Δϕ(f) )
 
 plot(p1, p2,p3, layout=l,size=(800,900))
 ```
