@@ -126,7 +126,7 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 	if !isnothing(y₂_err)
 		@assert size(y₂) == size(y₂_err) "The size of the time series and the error must be the same."
 	end
-
+	average_periodogram = false
 	if ndims(y₁) == 2
 		if size(y₁, 2) == 1
 			if compute_coherence
@@ -173,7 +173,7 @@ function cross_periodogram(t, y₁, y₂, y₁_err = nothing, y₂_err = nothing
 			X₁, X₂ = X₁[2:end, :], X₂[2:end, :]
 		else
 			X₁ = rfft(x₁ .- mean(x₁))
-			x₂ = rfft(x₂ .- mean(x₂))
+			X₂ = rfft(x₂ .- mean(x₂))
 			X₁, X₂ = X₁[2:end], X₂[2:end]
 		end
 	else
