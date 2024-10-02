@@ -415,7 +415,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
 
 	elseif sim.model isa CrossSpectralDensity
 
-		Δφ = exp.(im * π .* f .* sim.model.Δφ(f))
+		Δφ = exp.(2*im * π .* f .* sim.model.Δφ(f))
 
 		psd = sim.model.𝓟₁(f)
 		# get the randomised periodogram
