@@ -21,8 +21,8 @@ struct ConstantTimeLag <: PhaseModel
 	Δτ::Real
 end
 
-function calculate(Δφ::ConstantTimeLag, f)
-	return Δφ.Δτ * 2
+function calculate(f, Δφ::ConstantTimeLag)
+	return Δφ.Δτ
 end
 
 @doc raw"""
@@ -39,6 +39,9 @@ struct ConstantPhaseLag <: PhaseModel
 	f₀::Real
 end
 
-function calculate(Δφ::ConstantPhaseLag, f)
-	return @. Δφ.τ₀ * Δφ.f₀ / f * 2
+function calculate(f, Δφ::ConstantPhaseLag)
+	return @. Δφ.τ₀ * Δφ.f₀ / f
 end
+
+
+(Δφ::PhaseModel)(f) = calculate.(f, Ref(Δφ))
