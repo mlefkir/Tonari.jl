@@ -11,6 +11,7 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
 Distributions = "0.25"
@@ -19,6 +20,7 @@ Interpolations = "0.15"
 ProgressMeter = "1.10.2"
 StaticArrays = "1.9.11"
 StatsBase = "0.34"
+Unitful = "1.22.0"
 julia = "1"
 
 [extras]
