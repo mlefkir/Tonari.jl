@@ -13,43 +13,43 @@ Fill gaps in a time series data with linear interpolation. If `randomise_values 
 """
 function fill_gaps(rng::AbstractRNG, t::AbstractVector{Float64}, x::AbstractVector{Float64}, σₓ = nothing; randomise_values::Bool = true, poisson::Bool = true)
 
-	Δt = minimum(unique(diff(t))) # minimum time step
-	@info "Filling gaps assuming Δt = $Δt"
-	# time array we should have
-	t_new = range(t[1], stop = t[end], step = Δt)
-	# find times we are missing in t[i]
-	missing_times = setdiff(t_new, t)
-	@assert size(missing_times,1) > 0 "No missing times found check the time array"
-	# get the interpolated values
-	x_interp = linear_interpolation(t, x)(missing_times)
-	# randomise the interpolated values
-	if randomise_values
-		if poisson
-			x_interp = rand.(rng, Poisson.(x_interp * Δt)) / Δt
-			if !isnothing(σₓ)
-				σ_interp = sqrt.(x_interp * Δt) / Δt
-			end
-		else
-			error("Not implemented")
-		end
-	end
+    Δt = minimum(unique(diff(t))) # minimum time step
+    @info "Filling gaps assuming Δt = $Δt"
+    # time array we should have
+    t_new = range(t[1], stop = t[end], step = Δt)
+    # find times we are missing in t[i]
+    missing_times = setdiff(t_new, t)
+    @assert size(missing_times, 1) > 0 "No missing times found check the time array"
+    # get the interpolated values
+    x_interp = linear_interpolation(t, x)(missing_times)
+    # randomise the interpolated values
+    if randomise_values
+        if poisson
+            x_interp = rand.(rng, Poisson.(x_interp * Δt)) / Δt
+            if !isnothing(σₓ)
+                σ_interp = sqrt.(x_interp * Δt) / Δt
+            end
+        else
+            error("Not implemented")
+        end
+    end
 
 
-	# append to the original data
-	x_filled = vcat(x, x_interp)
-	t_filled = vcat(t, missing_times)
+    # append to the original data
+    x_filled = vcat(x, x_interp)
+    t_filled = vcat(t, missing_times)
 
-	# sort
-	p = sortperm(t_filled)
-	t_filled = t_filled[p]
-	x_filled = x_filled[p]
-	if !isnothing(σₓ)
-		σ_filled = vcat(σₓ, σ_interp)
-		σ_filled = σ_filled[p]
-		return t_filled, x_filled, σ_filled
-	end
+    # sort
+    p = sortperm(t_filled)
+    t_filled = t_filled[p]
+    x_filled = x_filled[p]
+    if !isnothing(σₓ)
+        σ_filled = vcat(σₓ, σ_interp)
+        σ_filled = σ_filled[p]
+        return t_filled, x_filled, σ_filled
+    end
 
-	return t_filled, x_filled
+    return t_filled, x_filled
 end
 
 fill_gaps(t::AbstractVector{Float64}, x::AbstractVector{Float64}, σₓ = nothing; randomise_values::Bool = true, poisson::Bool = true) = fill_gaps(Random.GLOBAL_RNG, t, x, σₓ; randomise_values = randomise_values, poisson = poisson)
