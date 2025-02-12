@@ -1,6 +1,6 @@
 # Tonari
 
-[![Documentation](https://github.com/mlefkir/Tonari.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/mlefkir/Tonari.jl/actions/workflows/documentation.yml) [![Build](https://github.com/mlefkir/Tonari.jl/actions/workflows/testbuild.yml/badge.svg)](https://github.com/mlefkir/Tonari.jl/actions/workflows/testbuild.yml)
+[![Documentation](https://github.com/mlefkir/Tonari.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/mlefkir/Tonari.jl/actions/workflows/documentation.yml) [![Build](https://github.com/mlefkir/Tonari.jl/actions/workflows/testbuild.yml/badge.svg)](https://github.com/mlefkir/Tonari.jl/actions/workflows/testbuild.yml) [![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
 
 [![codecov](https://codecov.io/gh/mlefkir/Tonari.jl/branch/periodograms/graph/badge.svg?token=JFLB0ZE7ZY)](https://codecov.io/gh/mlefkir/Tonari.jl)
 
