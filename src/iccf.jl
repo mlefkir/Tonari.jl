@@ -55,7 +55,7 @@ end
 	Compute the cross-correlation function between two time series.
 
 	The function computes the cross-correlation function between two time series by linearly interpolating the second time series using the interpolated cross-correlation function (ICCF) method.
-	Most of this code is based on the R package `sour` by Simon Vaugan (University of Leicester).
+	Most of this code is based on the R package `sour` by Simon Vaughan (University of Leicester).
 
 
 
@@ -66,11 +66,14 @@ end
 	- `x₂::AbstractVector{T}`: values of the second time series
 
 	# Optional arguments
-	- `σ₁::AbstractVector{T}=nothing`: uncertainty of the first time series
-	- `σ₂::AbstractVector{T}=nothing`: uncertainty of the second time series
-	- `τ_list::AbstractVector{T}=nothing`: list of time lags
-	- `Δτ::T=nothing`: time step between the time lags
-	- `max_lag::T=nothing`: maximum time lag
+	- `σ₁::AbstractVector{T} = nothing`: uncertainty of the first time series
+	- `σ₂::AbstractVector{T} = nothing`: uncertainty of the second time series
+	- `τ_list::AbstractVector{T} = nothing`: list of time lags
+	- `Δτ::T = nothing`: time step between the time lags
+    - `max_lag::T = nothing`: maximum time lag
+    - `local_estimate::Bool = false`: flag to estimate the local mean and standard deviation of the time series
+    - `both_ways::Bool = true`: flag to compute the cross-correlation function in both ways
+    - `method::String = "iccf"`: method to compute the cross-correlation function
 """
 function cross_correlate(
         t₁::AbstractVector{T},
@@ -86,7 +89,6 @@ function cross_correlate(
         both_ways = true,
         method = "iccf"
     ) where {T}
-
 
     # sanity checks
     time_series_sanity_checks(t₁, x₁, σ₁)
