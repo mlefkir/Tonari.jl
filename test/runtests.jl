@@ -4,7 +4,7 @@ using StatsBase
 using Test
 
 @testset "Tonari.jl" begin
-    #include("Aqua.jl")
+    include("Aqua.jl")
     include("test_simulations.jl")
     include("test_psd.jl")
     include("test_periodogram.jl")

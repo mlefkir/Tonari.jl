@@ -8,3 +8,8 @@ Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 
 [compat]
 Aqua = "0.8"
+Random = "1"
+DelimitedFiles = "1.9"
+Distributions = "0.25"
+StatsBase = "0.34"
+Test = "1"
