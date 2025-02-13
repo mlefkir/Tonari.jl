@@ -9,6 +9,21 @@ include("simulate.jl")
 include("periodogram.jl")
 include("csd.jl")
 include("timeseries.jl")
+include("iccf.jl")
 
-export periodogram, Simulation, PowerSpectralDensity, SingleBendingPowerLaw, DoubleBendingPowerLaw, Lorentzian, timmer_koenig, calculate, sample, CrossSpectralDensity, ConstantTimeLag, cross_periodogram, ConstantPhaseLag, fill_gaps
+export periodogram, Simulation,
+    PowerSpectralDensity,
+    SingleBendingPowerLaw,
+    DoubleBendingPowerLaw,
+    Lorentzian,
+    timmer_koenig,
+    calculate,
+    cross_correlate,
+    time_series_sanity_checks,
+    sample,
+    CrossSpectralDensity,
+    ConstantTimeLag,
+    cross_periodogram,
+    ConstantPhaseLag,
+    fill_gaps
 end

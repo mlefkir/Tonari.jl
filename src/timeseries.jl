@@ -2,6 +2,7 @@ using Unitful
 
 
 abstract type TimeStamps end
+
 """
 	IrregularTimeStamps
 
@@ -42,8 +43,8 @@ struct IrregularTimeStamps{T <: Float64, Tu <: Unitful.Units, Tz} <: TimeStamps
         timezero = time[1]
         return new{T, Tu, Tz}(time, unit, timezero, Δt, duration)
     end
-
 end
+
 """
 	RegularTimeStamps
 
@@ -101,7 +102,6 @@ struct TimeSeriesData{T, Tu <: Unitful.Units}
 
         return new{T, Tu}(columns, data, units)
     end
-
 end
 
 """
@@ -166,7 +166,6 @@ function fill_gaps(rng::AbstractRNG, t::AbstractVector{Float64}, x::AbstractVect
             error("Not implemented")
         end
     end
-
 
     # append to the original data
     x_filled = vcat(x, x_interp)
