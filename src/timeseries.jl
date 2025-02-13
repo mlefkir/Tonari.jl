@@ -185,3 +185,48 @@ function fill_gaps(rng::AbstractRNG, t::AbstractVector{Float64}, x::AbstractVect
 end
 
 fill_gaps(t::AbstractVector{Float64}, x::AbstractVector{Float64}, σₓ = nothing; randomise_values::Bool = true, poisson::Bool = true) = fill_gaps(Random.GLOBAL_RNG, t, x, σₓ; randomise_values = randomise_values, poisson = poisson)
+
+"""
+	time_series_sanity_checks(t₁::AbstractVector{T}, x₁::AbstractVector{T}, σ₁=nothing) where T
+
+	Perform sanity checks on the time series. The function checks the following:
+
+	- The time and value vectors have the same length
+	- The time and uncertainty vectors have the same length
+	- The time series are sorted in ascending order
+	- The time series do not contain infinities or NaNs
+
+	# Arguments
+	- `t₁::AbstractVector{T}`: time points of the time series
+	- `x₁::AbstractVector{T}`: values of the time series
+	- `σ₁::AbstractVector{T}=nothing`: uncertainty of the time series
+"""
+function time_series_sanity_checks(
+        t₁::AbstractVector{T},
+        x₁::AbstractVector{T},
+        σ₁ = nothing
+    ) where {T}
+
+    # assert that the time series have the same length
+    @assert length(t₁) == length(x₁) "Time and value vectors of the time series must have the same length"
+    if !isnothing(σ₁)
+        @assert length(t₁) == length(σ₁) "Time and uncertainty vectors of the time series must have the same length"
+    end
+
+    # check the order of the time series
+    if !issorted(t₁)
+        @info "Sorting the time series"
+        p = sortperm(t₁)
+        t₁ = t₁[p]
+        x₁ = x₁[p]
+        if !isnothing(σ₁)
+            σ₁ = σ₁[p]
+        end
+    end
+    # check for infinities and NaNs
+    @assert !(any(isinf.(x₁)) || any(isnan.(x₁))) "The time series contains infinities or NaNs"
+
+    return if !isnothing(σ₁)
+        @assert !(any(isinf.(σ₁)) || any(isnan.(σ₁))) "Uncertainty on the time series contains infinities or NaNs"
+    end
+end

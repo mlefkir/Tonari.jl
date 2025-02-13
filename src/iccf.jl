@@ -1,55 +1,6 @@
 using StatsBase
 
 """
-	time_series_sanity_checks(t₁::AbstractVector{T}, x₁::AbstractVector{T}, σ₁=nothing) where T
-
-	Perform sanity checks on the time series. The function checks the following:
-
-	- The time and value vectors have the same length
-	- The time and uncertainty vectors have the same length
-	- The time series are sorted in ascending order
-	- The time series do not contain infinities or NaNs
-
-	# Arguments
-	- `t₁::AbstractVector{T}`: time points of the first time series
-	- `x₁::AbstractVector{T}`: values of the first time series
-	- `σ₁::AbstractVector{T}=nothing`: uncertainty of the first time series
-"""
-function time_series_sanity_checks(
-        t₁::AbstractVector{T},
-        x₁::AbstractVector{T},
-        σ₁ = nothing
-    ) where {T}
-
-    # assert that the time series have the same length
-    @assert length(t₁) == length(x₁) "Time and value vectors of the first time series must have the same length"
-    if !isnothing(σ₁)
-        @assert length(t₁) == length(σ₁) "Time and uncertainty vectors of the first time series must have the same length"
-    end
-
-    # check the order of the time series
-    if !issorted(t₁)
-        @info "Sorting the first time series"
-        p = sortperm(t₁)
-        t₁ = t₁[p]
-        x₁ = x₁[p]
-        if !isnothing(σ₁)
-            σ₁ = σ₁[p]
-        end
-    end
-    # check for infinities and NaNs
-    if any(isinf.(x₁)) || any(isnan.(x₁))
-        @error "First time series contains infinities or NaNs"
-    end
-
-    return if !isnothing(σ₁)
-        if any(isinf.(σ₁)) || any(isnan.(σ₁))
-            @error "Uncertainty of the first time series contains infinities or NaNs"
-        end
-    end
-end
-
-"""
 	cross_correlate(t₁::AbstractVector{T}, x₁::AbstractVector{T}, t₂::AbstractVector{T}, x₂::AbstractVector{T}; σ₁=nothing, σ₂=nothing, τ_list=nothing, Δτ=nothing, max_lag=nothing, local_estimate=false, both_ways=true, method="iccf") where T
 
 	Compute the cross-correlation function between two time series.
