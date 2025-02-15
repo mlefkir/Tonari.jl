@@ -74,12 +74,12 @@ end
 """
 	TimeSeriesData
 
-	A type for the data in the time series.
+A type for the data in the time series.
 
-	# Fields
-	- `Union{Vector{Symbol},Symbol}`: the names of the columns, e.g. flux, error. Can be a vector of symbols or a single symbol if there is only one column.
-	- `data::Union{AbstractArray{T,2},Vector{T}}`: the data array. Can be a matrix of data or a vector if there is only one column.
-	- `units::Union{Vector{Tu},Tu}`: the units of the data. Can be a vector of units or a single unit if there is only one column or the same unit is used for all columns.
+# Fields
+- `Union{Vector{Symbol},Symbol}`: the names of the columns, e.g. flux, error. Can be a vector of symbols or a single symbol if there is only one column.
+- `data::Union{AbstractArray{T,2},Vector{T}}`: the data array. Can be a matrix of data or a vector if there is only one column.
+- `units::Union{Vector{Tu},Tu}`: the units of the data. Can be a vector of units or a single unit if there is only one column or the same unit is used for all columns.
 """
 struct TimeSeriesData{T, Tu <: Unitful.Units}
     columns::Union{Vector{Symbol}, Symbol}
@@ -112,23 +112,23 @@ end
 """
 	TimeSeries
 
-	A structure to store a time series. It contains the time stamps, the data, and a dictionary to store metadata.
+A structure to store a time series. It contains the time stamps, the data, and a dictionary to store metadata.
 
-	# Fields
-	- `time::TimeStamps{Tt,Tz}`: the time stamps
-	- `data::TimeSeriesData{Td, N}`: the data
-	- `metadata::Dict{Symbol, Any}`: a dictionary to store metadata
+# Fields
+- `time::TimeStamps{Tt,Tz}`: the time stamps
+- `data::TimeSeriesData{Td, N}`: the data
+- `metadata::Dict{Symbol, Any}`: a dictionary to store metadata
 
-	# Entries in metadata
+# Entries in metadata
 
-	- `:name`: a string to store the name of the time series
-	- `:description`: a string to store a description of the time series
-	- `:unit`: a string to store the unit(s) of the data
-	- `:unit_time`: unit of the time stamps (default: seconds)
-	- `:timezero`: a string to store the time of the first time stamp
-	- `:fake`: a boolean to indicate if the time series is fake
-	- `:instrument`: a string to store the instrument used to measure the time series
-	- `:irregular`: a boolean to indicate if the time series has irregular time stamps
+- `:name`: a string to store the name of the time series
+- `:description`: a string to store a description of the time series
+- `:unit`: a string to store the unit(s) of the data
+- `:unit_time`: unit of the time stamps (default: seconds)
+- `:timezero`: a string to store the time of the first time stamp
+- `:fake`: a boolean to indicate if the time series is fake
+- `:instrument`: a string to store the instrument used to measure the time series
+- `:irregular`: a boolean to indicate if the time series has irregular time stamps
 """
 struct TimeSeries{T, Typet <: TimeStamps, Tu <: Unitful.Units}
     time::Typet
@@ -139,29 +139,29 @@ end
 """
     TimeSeries(time::AbstractVector{T}, data::AbstractVector{Td}, metadata::Dict{Symbol,Any} = Dict{Symbol,Any}(), atol::T=0) where {T, Td}
 
-    A constructor for the TimeSeries structure.
+A constructor for the TimeSeries structure.
 
-    This function lets you create a TimeSeries structure using the times, data, and optional metadata.
+This function lets you create a TimeSeries structure using the times, data, and optional metadata.
 
-    # Arguments
-    - `time::AbstractVector{T}`: the time stamps of the time series (length N)
-    - `data::AbstractVector{Td}`: the data array (N x M) where N is the number of time stamps and M is the number of columns, M can be 1 for a single column, then data is a vector
-    - `metadata::Dict{Symbol,Any}`: a dictionary to store metadata
-    - `atol::T=0`: the absolute tolerance for the time stamps to check if they are regular
+# Arguments
+- `time::AbstractVector{T}`: the time stamps of the time series (length N)
+- `data::AbstractVector{Td}`: the data array (N x M) where N is the number of time stamps and M is the number of columns, M can be 1 for a single column, then data is a vector
+- `metadata::Dict{Symbol,Any}`: a dictionary to store metadata
+- `atol::T=0`: the absolute tolerance for the time stamps to check if they are regular
 
-    # Metadata (optional but highly recommended)
-    - `:irregular`::Bool : a boolean to indicate if the time stamps are irregular
-    - `:unit_time`: the unit of the time stamps (default: seconds) using Unitful
-    - `:timezero`: the time of the first time stamp (default: time[1])
-    - `:columns`: the names of the columns (length M, default: y1, y2, ...), if M = 1, then the column is a Symbol
-    - `:unit`: the units of the columns (using Unitful) (length M, default: dimensionless), if M = 1, then the unit is a Symbol, but if all columns have the same unit, then the unit is a single unit
-    - `:name`: the name of the time series (optional)
-    - `:description`: a description of the time series (optional)
-    - `:fake`: a boolean to indicate if the time series is fake (optional)
-    - `:instrument`: the instrument used to measure the time series (optional)
+# Metadata (optional but highly recommended)
+- `:irregular`::Bool : a boolean to indicate if the time stamps are irregular
+- `:unit_time`: the unit of the time stamps (default: seconds) using Unitful
+- `:timezero`: the time of the first time stamp (default: time[1])
+- `:columns`: the names of the columns (length M, default: y1, y2, ...), if M = 1, then the column is a Symbol
+- `:unit`: the units of the columns (using Unitful) (length M, default: dimensionless), if M = 1, then the unit is a Symbol, but if all columns have the same unit, then the unit is a single unit
+- `:name`: the name of the time series (optional)
+- `:description`: a description of the time series (optional)
+- `:fake`: a boolean to indicate if the time series is fake (optional)
+- `:instrument`: the instrument used to measure the time series (optional)
 
-    # Returns
-    - `TimeSeries`: a TimeSeries structure with the time stamps, data, and metadata
+# Returns
+- `TimeSeries`: a TimeSeries structure with the time stamps, data, and metadata
 """
 function TimeSeries(
         time::AbstractVector{T},
@@ -238,21 +238,21 @@ end
 @doc raw"""
 	fill_gaps(rng::AbstractRNG, t::Vector{Float64}, x::Vector{Float64}, σₓ = nothing; randomise_values::Bool = true, poisson::Bool = true)
 
-    Fill gaps in a time series data with linear interpolation. If `randomise_values = true`, the interpolated values are drawn from a normal distribution with the mean and standard deviation of the data. If `poisson = true`, the interpolated values are drawn from a Poisson distribution with the mean of the data.
+Fill gaps in a time series data with linear interpolation. If `randomise_values = true`, the interpolated values are drawn from a normal distribution with the mean and standard deviation of the data. If `poisson = true`, the interpolated values are drawn from a Poisson distribution with the mean of the data.
 
-    # Arguments
-    - `rng::AbstractRNG`: random number generator
-    - `t::Vector{Float64}`: time array
-    - `x::Vector{Float64}`: data array
-    - `σₓ`::Vector{Float64}: standard deviation of the data array (optional)
-    - `randomise_values::Bool`: whether to randomise the interpolated values (default: true)
-    - `poisson::Bool`: whether to use a Poisson distribution for the interpolated values, this assumes that the data is in counts/dt units (default: true)
-    - `Δt::Float64`: the time step of the time series (optional)
+# Arguments
+- `rng::AbstractRNG`: random number generator
+- `t::Vector{Float64}`: time array
+- `x::Vector{Float64}`: data array
+- `σₓ`::Vector{Float64}: standard deviation of the data array (optional)
+- `randomise_values::Bool`: whether to randomise the interpolated values (default: true)
+- `poisson::Bool`: whether to use a Poisson distribution for the interpolated values, this assumes that the data is in counts/dt units (default: true)
+- `Δt::Float64`: the time step of the time series (optional)
 
-    # Returns
-    - `t_filled::Vector{Float64}`: the time array with the gaps filled
-    - `x_filled::Vector{Float64}`: the data array with the gaps filled
-    - `σ_filled::Vector{Float64}`: the standard deviation of the data array with the gaps filled (optional)
+# Returns
+- `t_filled::Vector{Float64}`: the time array with the gaps filled
+- `x_filled::Vector{Float64}`: the data array with the gaps filled
+- `σ_filled::Vector{Float64}`: the standard deviation of the data array with the gaps filled (optional)
 """
 function fill_gaps(
         rng::AbstractRNG,
@@ -310,17 +310,17 @@ fill_gaps(t::AbstractVector{Float64}, x::AbstractVector{Float64}, σₓ = nothin
 """
 	time_series_sanity_checks(t₁::AbstractVector{T}, x₁::AbstractVector{T}, σ₁=nothing) where T
 
-	Perform sanity checks on the time series. The function checks the following:
+Perform sanity checks on the time series. The function checks the following:
 
-	- The time and value vectors have the same length
-	- The time and uncertainty vectors have the same length
-	- The time series are sorted in ascending order
-	- The time series do not contain infinities or NaNs
+- The time and value vectors have the same length
+- The time and uncertainty vectors have the same length
+- The time series are sorted in ascending order
+- The time series do not contain infinities or NaNs
 
-	# Arguments
-	- `t₁::AbstractVector{T}`: time points of the time series
-	- `x₁::AbstractVector{T}`: values of the time series
-	- `σ₁::AbstractVector{T}=nothing`: uncertainty of the time series
+# Arguments
+- `t₁::AbstractVector{T}`: time points of the time series
+- `x₁::AbstractVector{T}`: values of the time series
+- `σ₁::AbstractVector{T}=nothing`: uncertainty of the time series
 """
 function time_series_sanity_checks(
         t₁::AbstractVector{T},

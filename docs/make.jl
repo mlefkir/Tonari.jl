@@ -11,6 +11,7 @@ makedocs(
         "Home" => "index.md",
         "Simulations" => ["simulations.md", "simulations_delays.md"],
         "Spectral analysis" => ["periodogram.md"],
+        "Time domain" => ["correlations.md"],
         "References" => "references.md",
         "API Reference" => "api.md",
     ],

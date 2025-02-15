@@ -4,6 +4,6 @@
 astronomical applications.
 
 ```@contents
-Pages = ["index.md","simulations.md","simulations_delays.md","periodogram.md", "references.md", "api.md"]
+Pages = ["index.md","simulations.md","simulations_delays.md","periodogram.md", "correlations.md","references.md", "api.md"]
 Depth = 2
 ```

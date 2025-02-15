@@ -1,20 +1,20 @@
 """
     get_lag_list(Δτ, max_lag,t₁,t₂,τ_list)
 
-    Get the list of time lags to compute the cross-correlation function.
+Get the list of time lags to compute the cross-correlation function.
 
-    # Arguments
-    - `Δτ::T`: time step between the time lags
-    - `max_lag::T`: maximum time lag
-    - `t₁::AbstractVector{T}`: time stamps of the first time series
-    - `t₂::AbstractVector{T}`: time stamps of the second time series
-    - `τ_list::AbstractVector{T}`: list of time lags
+# Arguments
+- `Δτ::T`: time step between the time lags
+- `max_lag::T`: maximum time lag
+- `t₁::AbstractVector{T}`: time stamps of the first time series
+- `t₂::AbstractVector{T}`: time stamps of the second time series
+- `τ_list::AbstractVector{T}`: list of time lags
 
-    # Returns
-    - `τ_list::AbstractVector{T}`: list of time lags
-    - `Δτ::T`: time step between the time lags
-    - `max_lag::T`: maximum time lag
-    - `n_lags::Int64`: number of time lags
+# Returns
+- `τ_list::AbstractVector{T}`: list of time lags
+- `Δτ::T`: time step between the time lags
+- `max_lag::T`: maximum time lag
+- `n_lags::Int64`: number of time lags
 """
 function get_lag_list(Δτ, max_lag, t₁, t₂, τ_list)
     # if the time lags are not provided, compute them
@@ -50,31 +50,36 @@ end
 	cross_correlate(t₁::AbstractVector{T}, x₁::AbstractVector{T}, t₂::AbstractVector{T}, x₂::AbstractVector{T}; σ₁=nothing, σ₂=nothing, τ_list=nothing, Δτ=nothing, max_lag=nothing, local_estimate=false, both_ways=true, method="iccf", compute_errors=false, peak_frac=0.8, bootstrap=false, n_simulations=1_000,
     skip_sanity_checks = false) where T
 
-	Compute the cross-correlation function between two time series.
+Compute the cross-correlation function between two time series.
 
-	The function computes the cross-correlation function between two time series by linearly interpolating the second time series using the interpolated cross-correlation function (ICCF) method.
-	Most of this code is based on the R package `sour` by Simon Vaughan, University of Leicester https://github.com/SimonVaughanDataAndCode/sour.
+The function computes the cross-correlation function between two time series by linearly interpolating the second time series using the interpolated cross-correlation function (ICCF) method.
+Most of this code is based on the R package `sour` by Simon Vaughan, University of Leicester https://github.com/SimonVaughanDataAndCode/sour.
 
-	# Arguments
-	- `t₁::AbstractVector{T}`: time stamps of the first time series
-	- `x₁::AbstractVector{T}`: values of the first time series
-	- `t₂::AbstractVector{T}`: time stamps of the second time series
-	- `x₂::AbstractVector{T}`: values of the second time series
+# Arguments
+- `t₁::AbstractVector{T}`: time stamps of the first time series
+- `x₁::AbstractVector{T}`: values of the first time series
+- `t₂::AbstractVector{T}`: time stamps of the second time series
+- `x₂::AbstractVector{T}`: values of the second time series
 
-	# Optional arguments
-	- `σ₁::AbstractVector{T} = nothing`: uncertainty of the first time series
-	- `σ₂::AbstractVector{T} = nothing`: uncertainty of the second time series
-	- `τ_list::AbstractVector{T} = nothing`: list of time lags, if not provided, it will be computed based on the time range of the time series
-	- `Δτ::T = nothing`: time step between the time lags
-    - `max_lag::T = nothing`: maximum time lag
-    - `local_estimate::Bool = false`: flag to estimate the local mean and standard deviation of the time series
-    - `both_ways::Bool = true`: Compute the cross-correlation function in both ways, i.e., from the first to the second time series and from the second to the first time series
-    - `method::String = "iccf"`: method to compute the cross-correlation function
-    - `compute_errors::Bool = false`: flag to compute the errors of the cross-correlation function
-    - `peak_frac::T = 0.8`: fraction of the peak to integrate to get the lag
-    - `bootstrap::Bool = false`: flag to compute the errors using bootstrapping
-    - `n_simulations::Int = 1_000`: number of simulations to compute the errors
-    - `skip_sanity_checks::Bool = false`: flag to skip the sanity checks
+# Optional arguments
+- `σ₁::AbstractVector{T} = nothing`: uncertainty of the first time series
+- `σ₂::AbstractVector{T} = nothing`: uncertainty of the second time series
+- `τ_list::AbstractVector{T} = nothing`: list of time lags, if not provided, it will be computed based on the time range of the time series
+- `Δτ::T = nothing`: time step between the time lags
+- `max_lag::T = nothing`: maximum time lag
+- `local_estimate::Bool = false`: flag to estimate the local mean and standard deviation of the time series
+- `both_ways::Bool = true`: Compute the cross-correlation function in both ways, i.e., from the first to the second time series and from the second to the first time series
+- `method::String = "iccf"`: method to compute the cross-correlation function
+- `compute_errors::Bool = false`: flag to compute the errors of the cross-correlation function
+- `peak_frac::T = 0.8`: fraction of the peak to integrate to get the lag
+- `bootstrap::Bool = false`: flag to compute the errors using bootstrapping
+- `n_simulations::Int = 1_000`: number of simulations to compute the errors
+- `skip_sanity_checks::Bool = false`: flag to skip the sanity checks
+
+# Returns
+- `τ_list::AbstractVector{T}`: list of time lags
+- `r::AbstractVector{T}`: cross-correlation function
+- `q::AbstractVector{T}`: Distribution of centroid lags if `compute_errors` is `true`
 """
 function cross_correlate(
         rng::AbstractRNG,
@@ -185,38 +190,38 @@ cross_correlate(
 """
 	iccf(t₁::AbstractVector{T}, x₁::AbstractVector{T}, t₂::AbstractVector{T}, x₂::AbstractVector{T}, τ_list::AbstractVector{T} ; local_estimate=false) where T
 
-	Compute the interpolated cross-correlation function (ICCF) between two time series.
+Compute the interpolated cross-correlation function (ICCF) between two time series.
 
-	The function computes the cross-correlation function between two time series by linearly interpolating the second time series
-	on the time points of the first time series. The ICCF is presented in Edelson et al. 2017  https://ui.adsabs.harvard.edu/abs/2017ApJ...840...41E/abstract
-    and Peterson et al. 2004 https://ui.adsabs.harvard.edu/abs/2004ApJ...613..682P/abstract.
-    The current implementation is based on the R package `sour` by Simon Vaughan, University of Leicester https://github.com/SimonVaughanDataAndCode/sour.
+The function computes the cross-correlation function between two time series by linearly interpolating the second time series
+on the time points of the first time series. The ICCF is presented in Edelson et al. 2017  https://ui.adsabs.harvard.edu/abs/2017ApJ...840...41E/abstract
+and Peterson et al. 2004 https://ui.adsabs.harvard.edu/abs/2004ApJ...613..682P/abstract.
+The current implementation is based on the R package `sour` by Simon Vaughan, University of Leicester https://github.com/SimonVaughanDataAndCode/sour.
 
-    https://ui.adsabs.harvard.edu/abs/1986ApJ...305..175G/abstract
+https://ui.adsabs.harvard.edu/abs/1986ApJ...305..175G/abstract
 
-	# Arguments
-	- `t₁::AbstractVector{T}`: time points of the first time series
-	- `x₁::AbstractVector{T}`: values of the first time series
-	- `t₂::AbstractVector{T}`: time points of the second time series
-	- `x₂::AbstractVector{T}`: values of the second time series
-	- `τ_list::AbstractVector{T}`: list of time lags
-	- `local_estimate::Bool=false`: flag to estimate the local mean and standard deviation of the time series
+# Arguments
+- `t₁::AbstractVector{T}`: time points of the first time series
+- `x₁::AbstractVector{T}`: values of the first time series
+- `t₂::AbstractVector{T}`: time points of the second time series
+- `x₂::AbstractVector{T}`: values of the second time series
+- `τ_list::AbstractVector{T}`: list of time lags
+- `local_estimate::Bool=false`: flag to estimate the local mean and standard deviation of the time series
 
-	# Returns
-	- `CCF::Vector{T}`: cross-correlation function
-	- `nx::Vector{Int64}`: number of points in each time lag bin
+# Returns
+- `CCF::Vector{T}`: cross-correlation function
+- `nx::Vector{Int64}`: number of points in each time lag bin
 
-	# Example
-	```julia
-	using Random
-	Random.seed!(123)
-	t₁ = 0:0.1:10
-	x₁ = randn(length(t₁))
-	t₂ = 0:0.1:10
-	x₂ = randn(length(t₂))
-	τ_list = -10:0.1:10
-	CCF,nx = iccf(t₁, x₁, t₂, x₂, τ_list)
-	```
+# Example
+```julia
+using Random
+Random.seed!(123)
+t₁ = 0:0.1:10
+x₁ = randn(length(t₁))
+t₂ = 0:0.1:10
+x₂ = randn(length(t₂))
+τ_list = -10:0.1:10
+CCF,nx = iccf(t₁, x₁, t₂, x₂, τ_list)
+```
 """
 function iccf(
         t₁::AbstractVector{T},
@@ -287,38 +292,26 @@ function iccf(
 end
 
 """
-    iccf_errors(rng::AbstractRNG,
-        t₁::AbstractVector{T},
-        x₁::AbstractVector{T},
-        t₂::AbstractVector{T},
-        x₂::AbstractVector{T},
-        σ₁::AbstractVector{T} = nothing,
-        σ₂::AbstractVector{T} = nothing,
-        peak_frac = 0.8,
-        local_estimate = false,
-        τ_list = nothing,
-        bootstrap = false,
-        n_simulations = 1_000
-    ) where {T}
+    iccf_errors(rng::AbstractRNG, t₁::AbstractVector{T}, x₁::AbstractVector{T}, t₂::AbstractVector{T}, x₂::AbstractVector{T}, σ₁::AbstractVector{T} = nothing, σ₂::AbstractVector{T} = nothing,peak_frac = 0.8,local_estimate = false,τ_list = nothing,bootstrap = false,n_simulations = 1_000) where {T}
 
-    Compute the errors of the interpolated cross-correlation function (ICCF) between two time series.
+Compute the errors of the interpolated cross-correlation function (ICCF) between two time series.
 
-    # Arguments
-    - `rng::AbstractRNG`: Random number generator
-    - `t₁::AbstractVector{T}`: time points of the first time series
-    - `x₁::AbstractVector{T}`: values of the first time series
-    - `t₂::AbstractVector{T}`: time points of the second time series
-    - `x₂::AbstractVector{T}`: values of the second time series
-    - `σ₁::AbstractVector{T} = nothing`: uncertainty of the first time series
-    - `σ₂::AbstractVector{T} = nothing`: uncertainty of the second time series
-    - `peak_frac::T = 0.8`: fraction of the peak to integrate to get the lag
-    - `local_estimate::Bool = false`: flag to estimate the local mean and standard deviation of the time series
-    - `τ_list::AbstractVector{T} = nothing`: list of time lags
-    - `bootstrap::Bool = false`: flag to compute the errors using bootstrapping
-    - `n_simulations::Int = 1_000`: number of simulations to compute the errors
+# Arguments
+- `rng::AbstractRNG`: Random number generator
+- `t₁::AbstractVector{T}`: time points of the first time series
+- `x₁::AbstractVector{T}`: values of the first time series
+- `t₂::AbstractVector{T}`: time points of the second time series
+- `x₂::AbstractVector{T}`: values of the second time series
+- `σ₁::AbstractVector{T} = nothing`: uncertainty of the first time series
+- `σ₂::AbstractVector{T} = nothing`: uncertainty of the second time series
+- `peak_frac::T = 0.8`: fraction of the peak to integrate to get the lag
+- `local_estimate::Bool = false`: flag to estimate the local mean and standard deviation of the time series
+- `τ_list::AbstractVector{T} = nothing`: list of time lags
+- `bootstrap::Bool = false`: flag to compute the errors using bootstrapping
+- `n_simulations::Int = 1_000`: number of simulations to compute the errors
 
-    # Returns
-    - `q::Vector{T}`: array of lags
+# Returns
+- `q::Vector{T}`: array of lags
 """
 function iccf_errors(
         rng::AbstractRNG,
@@ -363,19 +356,19 @@ end
 """
 	randomise_lc_flux(rng::AbstractRNG, t::Vector{Float64}, x::Vector{Float64}; σ::Vector{Float64} = nothing, bootstrap::Bool = false)
 
-	Randomise the light curve by sampling with replacement. If `bootstrap` is `true`, the errors are not added to the light curve.
+Randomise the light curve by sampling with replacement. If `bootstrap` is `true`, the errors are not added to the light curve.
 
-	# Arguments
-	- `rng::AbstractRNG`: Random number generator
-	- `t::Vector{Float64}`: Time array
-	- `x::Vector{Float64}`: Flux array
-	- `σ::Vector{Float64}`: Error array
-	- `bootstrap::Bool`: If `true`, the errors are not added to the light curve
+# Arguments
+- `rng::AbstractRNG`: Random number generator
+- `t::Vector{Float64}`: Time array
+- `x::Vector{Float64}`: Flux array
+- `σ::Vector{Float64}`: Error array
+- `bootstrap::Bool`: If `true`, the errors are not added to the light curve
 
-	# Returns
-	- `t_samp::Vector{Float64}`: Sampled time array
-	- `x_samp::Vector{Float64}`: Sampled flux array
-	- `σ_samp::Vector{Float64}`: Sampled error array
+# Returns
+- `t_samp::Vector{Float64}`: Sampled time array
+- `x_samp::Vector{Float64}`: Sampled flux array
+- `σ_samp::Vector{Float64}`: Sampled error array
 """
 function randomise_lc_flux(rng::AbstractRNG, t::AbstractVector{T}, x::AbstractVector{T}; σ::AbstractVector{T} = nothing, bootstrap::Bool = false) where {T}
 
