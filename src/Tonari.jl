@@ -3,7 +3,11 @@ using Random
 using FFTW
 using Distributions
 using Interpolations
+using Unitful
+using StatsBase
+using ProgressMeter
 
+include("utils.jl")
 include("psd.jl")
 include("simulate.jl")
 include("periodogram.jl")
@@ -25,5 +29,7 @@ export periodogram, Simulation,
     ConstantTimeLag,
     cross_periodogram,
     ConstantPhaseLag,
-    fill_gaps
+    fill_gaps,
+    TimeSeriesData,
+    IrregularTimeStamps, RegularTimeStamps, TimeSeries
 end

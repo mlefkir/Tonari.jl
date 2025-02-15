@@ -9,6 +9,6 @@ using Test
     include("test_psd.jl")
     include("test_periodogram.jl")
     include("test_crossperiodogram.jl")
-    include("test_iccf.jl")
     include("test_timeseries.jl")
+    include("test_iccf.jl")
 end
