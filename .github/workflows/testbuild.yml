@@ -1,14 +1,12 @@
 name: Build
 
-on: 
+on:
   push:
     branches:
       - master
       - main
-      - dev
-      - periodograms
   pull_request:
-
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
