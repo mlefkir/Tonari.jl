@@ -220,7 +220,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
                 push!(xₛ, [])
                 l = 0
 
-                for j in 1:n_sim # for set of long time series
+                @showprogress for j in 1:n_sim # for set of long time series
                     if n_bands == 1
                         t_long, x_long = split_longtimeseries(t, x, n_slices, t_end)
                     else
