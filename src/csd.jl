@@ -45,4 +45,4 @@ function evaluate(Δφ::ConstantPhaseLag, f)
 end
 
 
-(Δφ::PhaseModel)(f) = evaluate.(f, Ref(Δφ))
+(Δφ::PhaseModel)(f) = evaluate.(Ref(Δφ), f)
