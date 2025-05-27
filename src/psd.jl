@@ -120,27 +120,27 @@ end
 
 Lorentzian(γ::Tγ, f₀::Tf₀) where {Tγ <: Real, Tf₀ <: Real} = Lorentzian(1.0, γ, f₀)
 
-function calculate(psd::QPO, f)
+function evaluate(psd::QPO, f)
     return psd.S₀ * psd.f₀^4 ./ ((f .^ 2 .- psd.f₀ .^ 2) .^ 2 .+ f .^ 2 .* psd.f₀^2 / psd.Q^2)
 end
 
-function calculate(psd::PowerLaw, f)
+function evaluate(psd::PowerLaw, f)
     return psd.A * (f)^(-psd.α)
 end
 
-function calculate(psd::Lorentzian, f)
+function evaluate(psd::Lorentzian, f)
     return psd.A ./ (4π^2 .* (f .- psd.f₀) .^ 2 + psd.γ^2)
 end
 
-function calculate(psd::DoubleBendingPowerLaw, f)
+function evaluate(psd::DoubleBendingPowerLaw, f)
     return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁)) / (1 + (f / psd.f₂)^(psd.α₃ - psd.α₂))
 end
 
-function calculate(psd::SingleBendingPowerLaw, f)
+function evaluate(psd::SingleBendingPowerLaw, f)
     return psd.A * (f / psd.f₁)^(-psd.α₁) / (1 + (f / psd.f₁)^(psd.α₂ - psd.α₁))
 end
 
-function calculate(model::SumOfPowerSpectralDensity, f)
+function evaluate(model::SumOfPowerSpectralDensity, f)
     return sum(p(f) for p in model.psd)
 end
 
@@ -160,7 +160,7 @@ function Base.:+(a::SumOfPowerSpectralDensity, b::SumOfPowerSpectralDensity)
     return SumOfPowerSpectralDensity([a.psd; b.psd])
 end
 
-(psd::PowerSpectralDensity)(f) = calculate.(Ref(psd), f)
+(psd::PowerSpectralDensity)(f) = evaluate.(Ref(psd), f)
 
 """
 	 separate_psd(psd::PowerSpectralDensity)
