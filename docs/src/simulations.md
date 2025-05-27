@@ -1,6 +1,6 @@
 # Simulating univariate time series
 
-Let's simulate univariate time series data from a power spectrum model using the method of [1995A&A...300..707T](@cite). 
+Let's simulate univariate time series data from a power spectrum model using the method of [1995A&A...300..707T](@cite).
 First we need to load the `Tonari` package and the `Random` package for generating random numbers.
 
 ```@example simulation_univariate
@@ -10,7 +10,7 @@ using Plots
 using StatsBase
 ```
 
-Let's define the power spectrum model, for instance we will use [`SingleBendingPowerLaw`](@ref). 
+Let's define the power spectrum model, for instance we will use [`SingleBendingPowerLaw`](@ref).
 
 ```@example simulation_univariate
 psd_model = SingleBendingPowerLaw(1.0, 1.13, 1.2e-1, 4.22)
@@ -39,9 +39,9 @@ t, x, σ = sample(rng, simu, N, error_size = 0.25)
 
 !!! note
     The `split_long` parameter is used to split the long time series into smaller segments to speed up the computation, by default this is enabled. This is useful when we want to simulate a large number of time series.
-    
+
 Finally, we can plot the simulated time series data.
-    
+
 ```@example simulation_univariate
 scatter(t, x[:, 1], label = nothing, yerr = σ[:, 1], xlabel = "Time (days)", ylabel = "Value", framestyle = :box, ms = 2)
 ```
@@ -70,7 +70,7 @@ We now define the [`Simulation`](@ref) object  with the new time stamps.
 ```@example simulation_univariate
 simu = Simulation(psd_model, t, 10, 10)
 ```
- 
+
  We can now sample the generative model.
 ```@example simulation_univariate
 t_obs, x, σ = sample(rng, simu, error_size = 0.25)

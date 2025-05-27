@@ -41,7 +41,7 @@ struct ConstantPhaseLag <: PhaseModel
 end
 
 function evaluate(Δφ::ConstantPhaseLag, f)
-    return @. Δφ.τ₀ * Δφ.f₀ / f 
+    return @. Δφ.τ₀ * Δφ.f₀ / f
 end
 
 
