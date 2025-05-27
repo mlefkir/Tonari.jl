@@ -1,5 +1,12 @@
 # API Reference
 
+## Time series
+
+```@autodocs
+Modules = [Tonari]
+Pages = ["timeseries.jl"]
+Order = [:type,:function]
+```
 
 ## Models
 
@@ -29,10 +36,10 @@ Pages = ["periodogram.jl"]
 Order = [:function]
 ```
 
-## Utilities
+## Correlations
 
 ```@autodocs
 Modules = [Tonari]
-Pages = ["timeseries.jl"]
-Order = [:function]
+Pages = ["iccf.jl"]
+Order = [:type, :function]
 ```

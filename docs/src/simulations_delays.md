@@ -1,6 +1,6 @@
 # Simulating delayed time series
 
-Let's simulate two time series with a delay 
+Let's simulate two time series with a delay
 
 ```@example simulation_delay
 using Tonari
