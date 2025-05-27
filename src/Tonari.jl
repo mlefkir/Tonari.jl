@@ -1,4 +1,5 @@
 module Tonari
+
 using Random
 using FFTW
 using Distributions
@@ -15,14 +16,15 @@ include("csd.jl")
 include("timeseries.jl")
 include("iccf.jl")
 
-export periodogram, Simulation,
-    PowerSpectralDensity,
+export PowerSpectralDensity,
+    Model,
+    PowerLaw,
     SingleBendingPowerLaw,
     DoubleBendingPowerLaw,
     Lorentzian,
-    timmer_koenig,
+    QPO,
     calculate,
-    cross_correlate,
+    separate_psd, periodogram, Simulation, timmer_koenig, cross_correlate,
     time_series_sanity_checks,
     sample,
     CrossSpectralDensity,

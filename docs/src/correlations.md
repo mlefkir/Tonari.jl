@@ -1,16 +1,17 @@
 # Lag and correlations between two time series
 
-The lag and correlation functions are useful for understanding the relationship between two time series. Here we show a method to compute the lag and correlation functions using the interpolated cross-correlation function (ICCF).
+The lag and correlation functions are useful for understanding the relationship between two time series. Here we show how to compute the lag and correlation functions using the interpolated cross-correlation function (ICCF).
 
 
 ## Interpolated cross-correlation function (ICCF)
 
 ### Explanation
 
-Add explanation of the ICCF from [1986ApJ...305..175G](@cite)
-[1998PASP..110..660P](@cite),
-[2004ApJ...613..682P](@cite)
-Implementation of `sour` for  [2017ApJ...840...41E](@cite) in R by Simon Vaughan [https://github.com/SimonVaughanDataAndCode/sour/](https://github.com/SimonVaughanDataAndCode/sour/)
+As its name suggests, the interpolated cross-correlation function, is the cross-correlation function calculated on interpolated data. In astronomy, most long-term time series of quasars are often irregularly sampled due to observation constraints, seasons, weather, etc.
+
+The seminal paper on the ICCF is [1986ApJ...305..175G](@citet) where linear interpolation is used. [1998PASP..110..660P](@citet) introduced flux-randomisation and ressampling to estimate uncertainties on the delay measurement.
+
+This package is a Julia reimplementation of the R package `sour` written by Simon Vaughan [https://github.com/SimonVaughanDataAndCode/sour/](https://github.com/SimonVaughanDataAndCode/sour/) and applied in [2017ApJ...840...41E](@citet).
 
 ### Example
 Let's simulate a pair of time series with a known cross-spectral density and compute the ICCF. The ICCF is a method to estimate the cross-correlation function between two time series with different sampling rates. The ICCF is computed by interpolating the cross-correlation function between the two time series.
@@ -49,19 +50,15 @@ plot(τ_list, r, label="ICCF", xlabel="Time Lag", ylabel="Correlation", title="I
 We can compute the centroid of the ICCF and plot it as a vertical line.
 ```@example iccf
 m = r .>=0.8*maximum(r)
-τ_peak = sum(τ_list[m].*r[m])/sum(r[m])
+τ_cent = sum(τ_list[m].*r[m])/sum(r[m])
 ```
 
 We can plot the distribution of the centroid of the ICCF and use it for error estimation.
 ```@example iccf
 p = histogram(q, bins=50, label="Time Lag ICCF Centroid", xlabel="Time Lag ", ylabel="Frequency",)
-p = vline!([τ_peak], label="Lag centroid")
+p = vline!([τ_cent], label="Lag centroid")
 ```
 
 ## Discrete Correlation function (DCF)
 
-Still need to be implemented
-### Explanation
-
-
-[1988ApJ...333..646E](@cite)
+Not implemented yet. [1988ApJ...333..646E](@citet)

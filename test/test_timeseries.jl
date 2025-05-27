@@ -101,7 +101,7 @@ function test_RegularTimeSeries_metadata()
     )
 
     # test the assertion
-    @test_throws "AssertionError: The metadata and the time stamps disagree on the time sampling. \n        metadata:true != regular_sampling false" TimeSeries(t, [x σ], metadata)
+    @test_throws "AssertionError: The metadata and the time stamps disagree on the time sampling.\n        metadata:true != regular_sampling false" TimeSeries(t, [x σ], metadata)
 
     # initialising the RegularTimeSeries with just data and times
     metadata[:irregular] = false
@@ -179,7 +179,7 @@ function test_IrregularTimeSeries_metadata()
     )
 
     # test the assertions
-    @test_throws "AssertionError: The metadata and the time stamps disagree on the time sampling. \n        metadata:false != regular_sampling true" TimeSeries(t, [x σ], metadata)
+    @test_throws "AssertionError: The metadata and the time stamps disagree on the time sampling.\n        metadata:false != regular_sampling true" TimeSeries(t, [x σ], metadata)
     metadata[:irregular] = true
     @test_throws "The unit of the time stamps does not have a Time (Unitful.𝐓) dimension. https://painterqubits.github.io/Unitful.jl/stable/defaultunits/#Base-dimensions" TimeSeries(t, [x σ], metadata)
     metadata[:unit_time] = u"d"

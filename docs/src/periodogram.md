@@ -1,12 +1,12 @@
 # Periodogram computation
 
-The periodogram is an estimator for the power spectral density of a time series. It is defined as the squared magnitude of the discrete Fourier transform of the time series. We use the [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) package to compute the discrete Fourier transform efficiently:
+The periodogram is an estimator for the power spectral density of a time series. It is defined as the squared magnitude of the discrete Fourier transform of the time series. We use [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) to compute the discrete Fourier transform efficiently:
 
 ```math
 X(f) = \sum_{n=1}^{N} x_n e^{-2\pi i f n \Delta t}
 ```
 
-where $x_n$ is the time series , $f$ is the frequency, and $\Delta t$ is the time interval between data points. The periodogram is then defined as 
+where $x_n$ is the time series , $f$ is the frequency, and $\Delta t$ is the time interval between data points. The periodogram is then defined as
 
 ```math
 I(f) = \frac{2}{T} |X(f)|^2
@@ -18,7 +18,7 @@ where $T=N\Delta t$ is the total duration of the time series. The periodogram is
 using Tonari
 using Random
 using Plots
-using StatsBase 
+using StatsBase
 rng = MersenneTwister(1234)
 ```
 
@@ -32,7 +32,7 @@ simu = Simulation(psd_model, T, Δt)
 t, x, σ = sample(rng, simu, 10, error_size = 0.25)
 ```
 
-We compute the average periodogram of the time series data using the function [`periodogram`](@ref). It is common to subtract the mean of the time series before computing the periodogram. The function also allows for applying end-matching, which is useful for reducing spectral leakage when the first and last points of the time series are not close to each other in value. 
+We compute the average periodogram of the time series data using the function [`periodogram`](@ref). It is common to subtract the mean of the time series before computing the periodogram. The function also allows for applying end-matching, which is useful for reducing spectral leakage when the first and last points of the time series are not close to each other in value.
 
 ```@example periodogram
 f,I = periodogram(t,x,apply_end_matching=false)
