@@ -36,7 +36,7 @@ Power law model for the power spectral density
 ```
 
 """
-struct PowerLaw{T <: Real} <: PowerSpectralDensity
+struct PowerLaw{T <: Real} <: BendingPowerLaw
     A::T
     α::T
 end
