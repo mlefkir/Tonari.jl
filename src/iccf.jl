@@ -375,7 +375,7 @@ function randomise_lc_flux(rng::AbstractRNG, t::AbstractVector{T}, x::AbstractVe
     # number of points in time series - and also the number of points to sample
     n_points = length(t)
     # indices of points to sample
-    idx = sample(rng, 1:n_points, n_points, replace = true)
+    idx = StatsBase.sample(rng, 1:n_points, n_points, replace = true)
     # collect the counts of each index
     counts = collect(values(countmap(idx)))
     idx = collect(keys(countmap(idx)))

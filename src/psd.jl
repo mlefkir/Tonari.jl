@@ -1,9 +1,9 @@
 abstract type Model end
 abstract type PowerSpectralDensity <: Model end
-abstract type BendingPowerLaw <: PowerSpectralDensity end
+abstract type ContinuumPowerSpectrum <: PowerSpectralDensity end
 
 @doc raw"""
-	QPO(S₀, f₀,A Q)
+	QPO(S₀, f₀, Q)
 
 QPO model
 
@@ -36,7 +36,8 @@ Power law model for the power spectral density
 ```
 
 """
-struct PowerLaw{T <: Real} <: BendingPowerLaw
+
+struct PowerLaw{T <: Real} <: ContinuumPowerSpectrum
     A::T
     α::T
 end
@@ -58,7 +59,7 @@ Single bending power law model for the power spectral density
 \mathcal{P}(f) =  A \frac{(f/f₁)^{-α₁}}{1 + (f / f₁)^{α₂ - α₁}}
 ```
 """
-struct SingleBendingPowerLaw{T <: Real} <: BendingPowerLaw
+struct SingleBendingPowerLaw{T <: Real} <: ContinuumPowerSpectrum
     A::T
     α₁::T
     f₁::T
@@ -83,7 +84,7 @@ Double bending power law model for the power spectral density
 \mathcal{P}(f) =  A\frac{(f/f₁)^{-α₁}}{1 + (f / f₁)^{α₂ - α₁}}\frac{1}{1 + (f / f₂)^{α₃ - α₂}}
 ```
 """
-struct DoubleBendingPowerLaw{T <: Real} <: BendingPowerLaw
+struct DoubleBendingPowerLaw{T <: Real} <: ContinuumPowerSpectrum
     A::T
     α₁::T
     f₁::T
@@ -165,7 +166,7 @@ end
 """
 	 separate_psd(psd::PowerSpectralDensity)
 
-Separate the PSD into its BendingPowerLaw components and other components if it is a sum of PSDs
+Separate the PSD into its ContinuumPowerSpectrum components and other components if it is a sum of PSDs
 
 # Arguments
 - `psd::PowerSpectralDensity`: power spectral density or sum of PowerSpectralDensity objects
@@ -175,10 +176,10 @@ Separate the PSD into its BendingPowerLaw components and other components if it 
 - `psd_line::Union{PowerSpectralDensity,nothing,Vector{PowerSpectralDensity}}`: non-continuum part of the psd
 """
 function separate_psd(psd::PowerSpectralDensity)
-    if isa(psd, BendingPowerLaw)
+    if isa(psd, ContinuumPowerSpectrum)
         return psd, nothing
     elseif isa(psd, SumOfPowerSpectralDensity)
-        cont = isa.(psd.psd, BendingPowerLaw)
+        cont = isa.(psd.psd, ContinuumPowerSpectrum)
         # if it's a sum of features only
         if all(cont .== false)
             return nothing, psd.psd
