@@ -32,5 +32,5 @@ export PowerSpectralDensity,
     ConstantPhaseLag,
     fill_gaps,
     TimeSeriesData,
-    IrregularTimeStamps, RegularTimeStamps, TimeSeries
+    IrregularTimeStamps, RegularTimeStamps, TimeSeries, sample
 end
