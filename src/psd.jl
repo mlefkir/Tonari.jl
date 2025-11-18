@@ -1,5 +1,13 @@
 abstract type Model end
+
+@doc raw"""
+Abstract type for power spectral densities
+"""
 abstract type PowerSpectralDensity <: Model end
+
+@doc raw"""
+Abstract type for continuum power spectra, i.e. broadband noise power spectra with no features
+"""
 abstract type ContinuumPowerSpectrum <: PowerSpectralDensity end
 
 @doc raw"""
@@ -29,6 +37,7 @@ QPO(f₀::Tf₀, Q::TQ) where {Tf₀ <: Real, TQ <: Real} = QPO(1.0, f₀, Q)
 
 Power law model for the power spectral density
 
+- `A`: the power law amplitude
 - `α`: the power law index
 
 ```math
@@ -36,7 +45,6 @@ Power law model for the power spectral density
 ```
 
 """
-
 struct PowerLaw{T <: Real} <: ContinuumPowerSpectrum
     A::T
     α::T

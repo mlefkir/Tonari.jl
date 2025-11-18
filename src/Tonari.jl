@@ -17,10 +17,12 @@ include("timeseries.jl")
 include("iccf.jl")
 
 export PowerSpectralDensity,
+    ContinuumPowerSpectrum,
     Model,
     PowerLaw,
     SingleBendingPowerLaw,
     DoubleBendingPowerLaw,
+    PowerLaw,
     Lorentzian,
     QPO,
     evaluate,

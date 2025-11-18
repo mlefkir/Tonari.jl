@@ -5,7 +5,7 @@
 ```@autodocs
 Modules = [Tonari]
 Pages = ["timeseries.jl"]
-Order = [:type,:function]
+Order = [:type, :function]
 ```
 
 ## Models
