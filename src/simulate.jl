@@ -29,7 +29,7 @@ struct Simulation{Tp <: Model, Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
 end
 
 function _regular_sampling(model::Model, T::Tt, Δt::Ts, S_high::Tsh, S_low::Tsl) where {Tt <: Real, Ts <: Real, Tsh <: Real, Tsl <: Real}
-    t = range(start = 0, stop = T, step = Δt)
+    t = range(start = 0, stop = T - Δt, step = Δt)
     return Simulation(model, T, Δt, S_high, S_low, t)
 end
 
@@ -176,7 +176,7 @@ function sample_timeseries(t, t_desired; tol = 0.0)
 end
 
 @doc raw"""
-	sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long)
+	sample_split_timeseries(x, t, t_desired, T, n_sim, n, n_slices, split_long)
 
 Split the time series into shorter time series and sample at the desired time stamps.
 
@@ -184,6 +184,7 @@ Split the time series into shorter time series and sample at the desired time st
 - `x::Array{Float64, 1}` or `Vector{Matrix{Float64}}`: The values of the time series. If there are multiple bands, the time series is a vector of matrices.
 - `t::Array{Float64, 1}`: The time indexes of the time series.
 - `t_desired::Array{Float64, 1}`: The desired time stamps.
+- `T::Float64`: Duration of the time series.
 - `n_sim::Int`: The number of simulations.
 - `n::Int`: The number of time series to generate.
 - `n_slices::Int`: The number of slices to break the time series into.
@@ -192,9 +193,9 @@ Split the time series into shorter time series and sample at the desired time st
 # Returns
 - A tuple of two arrays: the first containing the time indexes of the shorter time series, and the second containing the values of the shorter time series.
 """
-function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long; tol = 0.0)
+function sample_split_timeseries(x, t, t_desired, T, n_sim, n, n_slices, split_long; tol = 0.0)
 
-    t_end = t_desired[end]
+    t_end = T #t_desired[end]
     n_bands = 1
     xₛ = []
     if x isa Vector{Matrix{Float64}}
@@ -390,7 +391,7 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
         poisson = false
     end
 
-    Δf = 1 / sim.T / sim.S_low
+    Δf = 1 / (sim.T) / sim.S_low
     fₘ = 1 / sim.Δt / 2 * sim.S_high
     Δτ = 1 / 2fₘ
     f = range(start = Δf, step = Δf, stop = fₘ + Δf)
@@ -439,9 +440,8 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
     else
         error("The model must be a PowerSpectralDensity or CrossSpectralDensity")
     end
-
     # split the long time series and resample at the desired time stamps
-    times, xₛ = sample_split_timeseries(x, t, sim.t[1:(end - 1)], n_sim, n, n_slices, split_long, tol = Δτ)
+    times, xₛ = sample_split_timeseries(x, t, sim.t, sim.T, n_sim, n, n_slices, split_long, tol = Δτ)
 
     # return the time series without randomising the values
     if !randomise_values

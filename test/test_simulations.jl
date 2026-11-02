@@ -34,7 +34,7 @@ function init_simu_regular()
     @test sim.model == model
     @test sim.T == T
     @test sim.Δt == Δt
-    return @test sim.t == 0:Δt:T
+    return @test sim.t == 0:Δt:(T - Δt)
 end
 
 function init_simu_regular_bis()
@@ -44,7 +44,7 @@ function init_simu_regular_bis()
     @test sim.model == model
     @test sim.T == T
     @test sim.Δt == Δt
-    return @test sim.t == 0:Δt:T
+    return @test sim.t == 0:Δt:(T - Δt)
 end
 
 function init_simu_irregular()
@@ -75,7 +75,7 @@ function init_simu_regular_extend()
     @test sim.model == model
     @test sim.T == T
     @test sim.Δt == Δt
-    @test sim.t == 0:Δt:T
+    @test sim.t == 0:Δt:(T - Δt)
     @test sim.S_high == 15.5
     return @test sim.S_low == 14.4
 end
@@ -141,7 +141,7 @@ function sample_simu_regular()
     rng = MersenneTwister(306)
     tx, x, σ = sample(rng, sim)
     N = convert(Int, T / Δt)
-    @test tx ≈ sim.t[1:(end - 1)]
+    @test tx ≈ sim.t
     @test size(x) == size(σ)
     return @test size(x) == (N, 1)
 end
@@ -152,7 +152,7 @@ function sample_simu_regular_n()
     rng = MersenneTwister(124)
     tx, x, σ = sample(rng, sim, n)
     N = convert(Int, T / Δt)
-    @test tx ≈ sim.t[1:(end - 1)]
+    @test tx ≈ sim.t
     @test size(x) == size(σ)
     return @test size(x) == (N, n)
 end
@@ -163,7 +163,7 @@ function sample_simu_regular_n_nosplit()
     rng = MersenneTwister(216)
     tx, x, σ = sample(rng, sim, n, split_long = false)
     N = convert(Int, T / Δt)
-    @test tx ≈ sim.t[1:(end - 1)]
+    @test tx ≈ sim.t
     @test size(x) == size(σ)
     return @test size(x) == (N, n)
 end
@@ -174,7 +174,7 @@ function sample_simu_regular_poisson()
     rng = MersenneTwister(816)
     tx, x, σ = sample(rng, sim, n, poisson = true)
     N = convert(Int, T / Δt)
-    @test tx ≈ sim.t[1:(end - 1)]
+    @test tx ≈ sim.t
     @test size(x) == size(σ)
     @test size(x) == (N, n)
     return @test all(x .>= 0)
@@ -186,7 +186,7 @@ function sample_simu_regular_expo()
     rng = MersenneTwister(936)
     tx, x, σ = sample(rng, sim, n, exponentiate = true)
     N = convert(Int, T / Δt)
-    @test tx ≈ sim.t[1:(end - 1)]
+    @test tx ≈ sim.t
     @test size(x) == size(σ)
     @test size(x) == (N, n)
     return @test all(x .>= 0)
