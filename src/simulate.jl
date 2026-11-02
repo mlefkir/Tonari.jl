@@ -378,7 +378,7 @@ Generate a time series with a given power spectral density (PSD) using the [1995
 - `error_size::Real`: The size of the error. Default is 0.05.
 
 """
-function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; σₓ = nothing, randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05, return_long_timeseries = false)
+function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int = 1, input_mean = 0; σₓ = nothing, randomise_values = true, split_long = true, Fvar = nothing, alt::Bool = false, poisson = false, exponentiate = false, error_size = 0.05)
     @assert n > 0 "The number of simulations n must be a postive integer!, n=$n is not accepted"
     if !isnothing(Fvar)
         @assert Fvar > 0 "The variance Fvar must be a positive number!"
@@ -439,9 +439,6 @@ function Distributions.sample(rng::Random.AbstractRNG, sim::Simulation, n::Int =
         t = range(0, step = Δτ, length = size(x₁, 1))
     else
         error("The model must be a PowerSpectralDensity or CrossSpectralDensity")
-    end
-    if return_long_timeseries
-        return t, x
     end
     # split the long time series and resample at the desired time stamps
     times, xₛ = sample_split_timeseries(x, t, sim.t, sim.T, n_sim, n, n_slices, split_long, tol = Δτ)
