@@ -131,8 +131,7 @@ function split_longtimeseries(t, ts, n_slices::Int, t_end)
     t_slices = []
     ts_slices = []
     end_long = sum(t .<= t_end)
-
-    indexes = [(i * end_long + 1):((end_long) * (i + 1)) for i in 0:(n_slices - 1)]
+    indexes = [((i - 1) * end_long + 2 - i):(end_long * i - i) for i in 1:n_slices]
     for i in 1:n_slices
         t_slice = t[indexes[i]] .- t[indexes[i]][1]
         ts_slice = ts[indexes[i]]
@@ -222,7 +221,7 @@ function sample_split_timeseries(x, t, t_desired, n_sim, n, n_slices, split_long
 
                 @showprogress for j in 1:n_sim # for set of long time series
                     if n_bands == 1
-                        t_long, x_long = split_longtimeseries(t, x, n_slices, t_end)
+                        t_long, x_long = split_longtimeseries(t, x[:, j], n_slices, t_end)
                     else
                         t_long, x_long = split_longtimeseries(t, reshape(x[k][:, j], (size(x[k], 1), 1)), n_slices, t_end)
                     end
